@@ -16,11 +16,19 @@ export const ajustesCopy = {
   productosRow: 'Editar mis productos',
   productosHint: 'Agregar, cambiar precios o borrar',
 
+  demoTitulo: 'Datos de ejemplo',
+  demo: 'Cargar datos de demo',
+  demoHint:
+    'Llena la app con ~14 días de ventas y cierres para verla funcionando. No toca tu caja de hoy; lo sacás con "empezar de cero".',
+  demoConfirm: '¿Cargar ~14 días de ventas de ejemplo? No borra nada tuyo.',
+  demoCargando: 'Generando…',
+  demoListo: 'Datos de demo cargados',
+
   zonaTitulo: 'Empezar de nuevo',
   reset: 'Borrar todo y empezar de cero',
-  resetHint: 'Borra productos, ventas, salidas y cierres. Volvés al tutorial.',
+  resetHint: 'Borra productos, categorías, ventas, cajas y movimientos. Volvés al tutorial.',
   resetConfirm:
-    '¿Seguro? Esto borra TODOS tus datos (productos, ventas, salidas y cierres) y no se puede deshacer.',
+    '¿Seguro? Esto borra TODOS tus datos (productos, categorías, ventas, cajas y movimientos) y no se puede deshacer.',
 
   version: 'Cuadre · versión 1.0',
 };

@@ -33,16 +33,29 @@ export async function actualizarConfig(cambios: Partial<Config>): Promise<void> 
 }
 
 /**
- * Borra TODO (productos, ventas, egresos, cierres) y deja la config en cero,
- * con el onboarding sin completar. La app vuelve sola al onboarding.
+ * Borra TODO (productos, categorías, ventas, cajas, movimientos y las tablas
+ * legacy) y deja la config en cero, con el onboarding sin completar. La app
+ * vuelve sola al onboarding.
  */
 export async function reiniciarTodo(): Promise<void> {
   await db.transaction(
     'rw',
-    [db.productos, db.ventas, db.egresos, db.cierres, db.config],
+    [
+      db.productos,
+      db.categorias,
+      db.ventas,
+      db.cajas,
+      db.movimientos,
+      db.egresos,
+      db.cierres,
+      db.config,
+    ],
     async () => {
       await db.productos.clear();
+      await db.categorias.clear();
       await db.ventas.clear();
+      await db.cajas.clear();
+      await db.movimientos.clear();
       await db.egresos.clear();
       await db.cierres.clear();
       await db.config.clear();

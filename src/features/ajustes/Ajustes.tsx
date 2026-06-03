@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { actualizarConfig, obtenerConfig, reiniciarTodo } from '../../db/config';
+import { cargarDatosDemo } from '../../db/demo';
 import { Header } from '../../components/Header';
 import { Pantalla } from '../../components/Pantalla';
 import { InputPlata } from '../../components/InputPlata';
@@ -17,6 +18,7 @@ export function Ajustes({ onAtras, onEditarProductos }: Props) {
   const [nombre, setNombre] = useState<string | null>(null);
   const [fondo, setFondo] = useState<number | null>(null);
   const [guardado, setGuardado] = useState(false);
+  const [demo, setDemo] = useState<'idle' | 'cargando' | 'listo'>('idle');
 
   const nombreVal = nombre ?? config?.nombreKiosco ?? '';
   const fondoVal = fondo ?? config?.fondoInicial ?? 0;
@@ -38,6 +40,15 @@ export function Ajustes({ onAtras, onEditarProductos }: Props) {
     if (!window.confirm(t.resetConfirm)) return;
     await reiniciarTodo();
     // App vuelve sola al onboarding (observa la config).
+  }
+
+  async function cargarDemo() {
+    if (demo === 'cargando') return;
+    if (!window.confirm(t.demoConfirm)) return;
+    setDemo('cargando');
+    await cargarDatosDemo();
+    setDemo('listo');
+    window.setTimeout(() => setDemo('idle'), 2500);
   }
 
   return (
@@ -103,6 +114,30 @@ export function Ajustes({ onAtras, onEditarProductos }: Props) {
             <span className="block text-sm text-cuadre-900/55">{t.productosHint}</span>
           </span>
           <IconoChevron width={20} height={20} className="shrink-0 text-cuadre-900/25" />
+        </button>
+
+        {/* Datos de ejemplo */}
+        <h2 className="mb-2 mt-7 px-1 font-bold text-cuadre-900">{t.demoTitulo}</h2>
+        <button
+          type="button"
+          onClick={cargarDemo}
+          disabled={demo === 'cargando'}
+          className="card flex w-full items-center gap-4 p-4 text-left transition active:scale-[0.99] disabled:opacity-60"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cuadre-50 text-2xl">
+            🧪
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold text-cuadre-900">
+              {demo === 'cargando' ? t.demoCargando : demo === 'listo' ? t.demoListo : t.demo}
+            </span>
+            <span className="block text-sm text-cuadre-900/55">{t.demoHint}</span>
+          </span>
+          {demo === 'listo' ? (
+            <IconoCheck width={20} height={20} strokeWidth={2.5} className="shrink-0 text-cuadra" />
+          ) : (
+            <IconoChevron width={20} height={20} className="shrink-0 text-cuadre-900/25" />
+          )}
         </button>
 
         {/* Zona de reinicio */}

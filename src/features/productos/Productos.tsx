@@ -57,6 +57,22 @@ function ListaProductos({
 
   const nombreCategoria = new Map(categorias.map((c) => [c.uuid, c.nombre]));
 
+  const grupos: { uuid: string | null; nombre: string; emoji?: string; items: Producto[] }[] =
+    categorias
+      .map((c) => ({
+        uuid: c.uuid,
+        nombre: c.nombre,
+        emoji: c.emoji,
+        items: productos.filter((p) => p.categoriaUuid === c.uuid),
+      }))
+      .filter((g) => g.items.length > 0);
+  const sinCategoria = productos.filter(
+    (p) => !p.categoriaUuid || !nombreCategoria.has(p.categoriaUuid),
+  );
+  if (sinCategoria.length > 0) {
+    grupos.push({ uuid: null, nombre: t.sinCategoria, emoji: undefined, items: sinCategoria });
+  }
+
   function abrirNuevo() {
     setEditando(undefined);
     setSheetAbierto(true);
@@ -122,35 +138,22 @@ function ListaProductos({
             </button>
           </div>
         ) : (
-          <ul className="flex flex-col gap-2">
-            {productos.map((p) => {
-              const cat = p.categoriaUuid ? nombreCategoria.get(p.categoriaUuid) : undefined;
-              return (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    onClick={() => abrirEdicion(p)}
-                    className="card flex w-full items-center gap-3 p-3 text-left transition active:scale-[0.99]"
-                  >
-                    <span
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cuadre-50 text-2xl"
-                      aria-hidden
-                    >
-                      {p.emoji || '🛒'}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold text-cuadre-900">
-                        {p.nombre}
-                      </span>
-                      {cat && <span className="block truncate text-sm text-cuadre-900/50">{cat}</span>}
-                    </span>
-                    <span className="num font-bold text-cuadre-900">{formatPesos(p.precio)}</span>
-                    <IconoChevron width={20} height={20} className="shrink-0 text-cuadre-900/25" />
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="flex flex-col gap-5">
+            {grupos.map((g) => (
+              <section key={g.uuid ?? '__sin__'}>
+                <h3 className="mb-2 flex items-center gap-1.5 px-1 text-sm font-bold uppercase tracking-wide text-cuadre-900/45">
+                  <span aria-hidden>{g.emoji ?? '🛒'}</span>
+                  <span>{g.nombre}</span>
+                  <span className="font-semibold text-cuadre-900/30">· {g.items.length}</span>
+                </h3>
+                <ul className="flex flex-col gap-2">
+                  {g.items.map((p) => (
+                    <ProductoFila key={p.id} p={p} onClick={() => abrirEdicion(p)} />
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
         )}
       </Pantalla>
 
@@ -167,5 +170,32 @@ function ListaProductos({
         />
       </Sheet>
     </>
+  );
+}
+
+function ProductoFila({ p, onClick }: { p: Producto; onClick: () => void }) {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className="card flex w-full items-center gap-3 p-3 text-left transition active:scale-[0.99]"
+      >
+        <span
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cuadre-50 text-2xl"
+          aria-hidden
+        >
+          {p.emoji || '🛒'}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-semibold text-cuadre-900">{p.nombre}</span>
+          {p.costo != null && (
+            <span className="num block text-sm text-cuadre-900/45">costo {formatPesos(p.costo)}</span>
+          )}
+        </span>
+        <span className="num font-bold text-cuadre-900">{formatPesos(p.precio)}</span>
+        <IconoChevron width={20} height={20} className="shrink-0 text-cuadre-900/25" />
+      </button>
+    </li>
   );
 }
