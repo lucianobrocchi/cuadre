@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Alto de la barra inferior + safe area, para padding de las pantallas. */
+    --nav-h: 4.5rem;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-[#F3F6F4] text-cuadre-900 font-sans antialiased;
+    /* Evita el flash gris al tocar en Android y el scroll de rebote. */
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Que ningún número parezca "saltar" al cambiar: ancho fijo por dígito. */
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+
+  /* Botón primario grande, pensado para usar con el dedo. */
+  .btn-primario {
+    @apply flex w-full items-center justify-center gap-2 rounded-2xl bg-cuadre
+      px-6 py-4 text-lg font-semibold text-white shadow-card transition
+      active:scale-[0.98] active:bg-cuadre-700 disabled:opacity-40
+      disabled:active:scale-100;
+  }
+
+  .btn-secundario {
+    @apply flex w-full items-center justify-center gap-2 rounded-2xl border-2
+      border-cuadre/15 bg-white px-6 py-4 text-lg font-semibold text-cuadre
+      shadow-card transition active:scale-[0.98] disabled:opacity-40;
+  }
+
+  .card {
+    @apply rounded-2xl bg-white shadow-card;
+  }
+
+  /* Input grande para montos de plata. */
+  .input-grande {
+    @apply w-full rounded-2xl border-2 border-cuadre/15 bg-white px-4 py-4
+      text-2xl font-semibold text-cuadre-900 outline-none transition
+      placeholder:text-cuadre-900/30 focus:border-cuadre;
+  }
+
+  .pad-nav {
+    padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+@layer utilities {
+  @keyframes sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  .animate-sheet {
+    animation: sheet-in 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .animate-fade {
+    animation: fade-in 0.18s ease-out;
+  }
+  .animate-pop {
+    animation: pop-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}

@@ -1,0 +1,14 @@
+# Configuración de build para Netlify.
+# Con esto, al conectar el repo, Netlify ya sabe cómo construir y publicar Cuadre.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA: cualquier ruta cae al index (el service worker maneja el offline).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
