@@ -1,45 +1,45 @@
 import { useMemo, useState } from 'react';
 import type { Producto } from '../../db/types';
 import { actualizarConfig } from '../../db/config';
+import { asegurarCategorias } from '../../db/categorias';
 import { agregarProductos } from '../../db/productos';
-import { catalogoInicial } from '../../data/catalogoInicial';
 import { PasoBienvenida } from './PasoBienvenida';
-import { PasoProductos, type ProductoPropio } from './PasoProductos';
+import { PasoProductos, type Elegido, type ProductoPropio } from './PasoProductos';
 import { PasoVenta } from './PasoVenta';
 import { PasoCierre } from './PasoCierre';
-
-/** Arma la lista de productos elegidos con id sintético (para la práctica). */
-function armarProductos(
-  catSel: Record<string, number>,
-  propios: ProductoPropio[],
-): Producto[] {
-  const items: Producto[] = [];
-  let id = 1;
-  for (const item of catalogoInicial) {
-    if (item.nombre in catSel) {
-      items.push({ id: id++, nombre: item.nombre, precio: catSel[item.nombre], emoji: item.emoji });
-    }
-  }
-  for (const p of propios) {
-    items.push({ id: id++, nombre: p.nombre, precio: p.precio });
-  }
-  return items;
-}
 
 export function Onboarding() {
   const [paso, setPaso] = useState(1);
   const [nombre, setNombre] = useState('');
-  const [catSel, setCatSel] = useState<Record<string, number>>({});
+  const [seleccion, setSeleccion] = useState<Map<string, Elegido>>(new Map());
   const [propios, setPropios] = useState<ProductoPropio[]>([]);
   const [vendido, setVendido] = useState(0);
 
-  const productosElegidos = useMemo(() => armarProductos(catSel, propios), [catSel, propios]);
+  // Lista con id sintético para la venta de práctica (no toca la base todavía).
+  const productosElegidos = useMemo<Producto[]>(() => {
+    const items: Producto[] = [];
+    let id = 1;
+    for (const e of seleccion.values()) {
+      items.push({ id: id++, nombre: e.nombre, precio: e.precio, costo: e.costo, emoji: e.emoji });
+    }
+    for (const p of propios) items.push({ id: id++, nombre: p.nombre, precio: p.precio });
+    return items;
+  }, [seleccion, propios]);
 
   async function finalizar() {
-    // Guardamos el catálogo real, el nombre y marcamos el onboarding como hecho.
-    await agregarProductos(
-      productosElegidos.map(({ nombre: n, precio, emoji }) => ({ nombre: n, precio, emoji })),
-    );
+    const elegidos = [...seleccion.values()];
+    // Creamos las categorías reales y mapeamos nombre→uuid.
+    const mapaCat = await asegurarCategorias(elegidos.map((e) => e.categoria));
+    await agregarProductos([
+      ...elegidos.map((e) => ({
+        nombre: e.nombre,
+        precio: e.precio,
+        costo: e.costo,
+        emoji: e.emoji,
+        categoriaUuid: mapaCat.get(e.categoria.toLowerCase()),
+      })),
+      ...propios.map((p) => ({ nombre: p.nombre, precio: p.precio })),
+    ]);
     await actualizarConfig({ nombreKiosco: nombre.trim(), onboardingCompletado: true });
     // App re-renderiza solo: observa la config con useLiveQuery.
   }
@@ -52,8 +52,8 @@ export function Onboarding() {
     case 2:
       return (
         <PasoProductos
-          catSel={catSel}
-          setCatSel={setCatSel}
+          seleccion={seleccion}
+          setSeleccion={setSeleccion}
           propios={propios}
           setPropios={setPropios}
           onContinuar={() => setPaso(3)}

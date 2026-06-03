@@ -13,9 +13,11 @@ export const onboardingCopy = {
     title: "Cargá lo que más vendés",
     subtitle: "Con 5 productos alcanza para arrancar. Después agregás el resto.",
     catalogoLabel: "Elegí de la lista rápida",
-    catalogoHint: "Tocá los que vendés y ajustá el precio.",
+    catalogoHint: "Tocá los que vendés por categoría. Ponés el costo si querés ver tu ganancia (opcional).",
     propiosLabel: "O cargá los tuyos",
     propiosHint: "Nombre y precio, nada más.",
+    precioLbl: "Precio",
+    costoLbl: "Costo",
     button: "Listo, seguir",
   },
 
@@ -52,7 +54,7 @@ export const onboardingCopy = {
       detalle: "Quizás cobraste algo que no anotaste. Igual, ahora ya lo sabés.",
     }),
     cierreFinalTitle: "Listo, hiciste tu primer cierre.",
-    cierreFinalSubtitle: "Así de fácil va a ser todos los días. Bienvenido a Cuadre.",
+    cierreFinalSubtitle: "Así de fácil, todos los días. Y en la pestaña Ganancia vas a ver cuánto te deja cada cosa.",
     button: "Empezar a usar Cuadre",
   },
 };

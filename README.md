@@ -55,10 +55,10 @@ versión simplificada (solo vendido vs. contado) para el "ajá" inicial.
 
 - **Vender** (home): gate de caja (si no hay caja abierta, "Abrir caja"); con caja: barra de estado, chips de categoría, grid de productos (long-press = editar precio), ticket en vivo, medio de pago (efectivo/transferencia), Cobrar. Engranaje arriba = Ajustes.
 - **Caja**: abrir/cerrar sesión, estado (fondo / en caja), movimientos de efectivo, resumen del día.
-- **Productos**: lista por categoría · 3 vías para cargar → **⚡ Cargar del catálogo** (rápido), **📥 Importar de Excel o foto** (masivo), **+** (manual). Editar/borrar. Categorías que se crean al vuelo. El alta manual ahora guarda **costo** y **categoría** (antes el alta manual se comía la categoría).
+- **Productos**: lista **agrupada por categoría** (con el costo de cada uno). Un solo botón **Agregar productos** abre un hub con las 3 vías → **⚡ del catálogo** (con buscador y "agregar toda la categoría"), **📥 Excel o foto**, **✏️ uno a mano**. Editar/borrar; categorías que se crean al vuelo. El alta manual guarda **costo** y **categoría**.
 - **Ganancia** (dashboard): selector de período (hoy / últimos 7 días). Arriba, **ganancia real** del período (vendido, costo, ganancia, margen %); abajo, **margen del catálogo** por categoría → producto. Tocás un producto y le ponés el costo ahí mismo. Necesita que los productos tengan `costo` cargado.
 - **Historial**: cajas cerradas con su descuadre y detalle (apertura/cierre, fondo, ventas, ingresos, salidas, esperado, contado).
-- **Ajustes**: nombre del kiosco, fondo inicial por defecto, ir a productos, empezar de cero.
+- **Ajustes**: nombre del kiosco, fondo inicial por defecto, ir a productos, **cargar datos de demo** (~14 días de ventas/cierres para ver la app llena), y empezar de cero (borra todo: productos, categorías, ventas, cajas y movimientos).
 
 ## Modelo de datos (Dexie v3)
 
@@ -75,7 +75,9 @@ Tablas sincronizables llevan `uuid · updatedAt · dirty · deleted` (listo para
 
 ## Carga de productos (3 vías, "subida al 200%")
 
-1. **Catálogo precargado** (`src/data/catalogoPrecargado.ts`): **17 categorías, ~230 productos** de kiosco/almacén argentino. Tocás los que vendés (multi-select por categoría) → "Agregar N" → alta masiva en segundos. Detecta duplicados; precio y **costo opcional** editables inline.
+Las 3 vías viven en un hub único **Agregar productos** (`Productos.tsx`), en vez de botones sueltos.
+
+1. **Catálogo precargado** (`src/data/catalogoPrecargado.ts`): **17 categorías, ~230 productos** de kiosco/almacén argentino. Tocás los que vendés (por categoría, con **buscador** sobre todo el catálogo y botón **"agregar toda la categoría"**) → "Agregar N" → alta masiva en segundos. Detecta duplicados; precio y **costo opcional** editables inline.
 2. **Excel/CSV** (`importar/parseExcel.ts`): 100% local (SheetJS, carga diferida). Autodetecta columnas (nombre, precio, **costo**, categoría, código) → preview editable → alta masiva.
 3. **Foto del cuaderno** (`importar/parseFoto.ts`): mismo flujo; hoy mock, en Fase D se conecta a la IA.
 
@@ -83,7 +85,7 @@ Tablas sincronizables llevan `uuid · updatedAt · dirty · deleted` (listo para
 
 ```
 src/
-├─ db/            Dexie: db.ts, types.ts, config.ts, productos.ts, ventas.ts, cajas.ts, movimientos.ts, categorias.ts
+├─ db/            Dexie: db.ts, types.ts, config.ts, productos.ts, ventas.ts, cajas.ts, movimientos.ts, categorias.ts, demo.ts (datos de ejemplo)
 ├─ lib/           Lógica pura: caja.ts (cuentas del cierre), cierre.ts (estados), rentabilidad.ts (márgenes + ganancia), fecha.ts, format.ts, medios.ts, uuid.ts
 ├─ data/          catalogoInicial.ts (onboarding), catalogoPrecargado.ts (carga rápida)
 ├─ components/    UI compartida: Header, BottomNav, Sheet, InputPlata, ResultadoCierre, Iconos, Logo, Pantalla
@@ -105,7 +107,7 @@ src/
    - El `costo` se carga **producto por producto** (form / dashboard), en la **carga rápida del catálogo** (campo opcional al seleccionar) y en la **importación Excel/foto** (autodetecta la columna *costo* y se edita en el preview).
    - **Pro**: este dashboard, lindo y simple. **Full**: ejecutivo avanzado (tendencias, comparativas por semana/mes).
 2. **Historial de ventas de la semana** — vista de los últimos 7 días.
-3. **Onboarding rework** — se retoma cuando la app esté más terminada (decisión del usuario).
+3. ✅ **Onboarding rework** *(hecho)* — flujo: nombre → elegir del catálogo **por categorías** con **costo opcional** → venta de práctica → primer cierre → cierra invitando a la pestaña **Ganancia**. Persiste categoría + costo al terminar (`src/features/onboarding/`, catálogo curado en `catalogoInicial.ts`).
 4. **Fase C — panel de venta ágil**: descuento %, redondeo auto/manual, atajo **F8** para cobrar, búsqueda + **lector de barras** (el campo `codigoBarras` ya existe), **múltiples listas de precio** (Minorista/Mayorista).
 5. **Fase D — backend**: Supabase (auth + sync last-write-wins), **permisos granulares**, y el **agente IA real** (fotos de cuaderno + lectura de facturas con la Claude API).
 6. **Integraciones**: AFIP (factura electrónica), ticketera térmica, pago a proveedor desde el POS, etiquetas para góndola, **control de fiados**.
@@ -113,8 +115,8 @@ src/
 ## Para retomar en otra conversación
 
 - Todo el código está en el repo (`main`). Build verificado.
-- **Dashboard de rentabilidad: hecho.** Lógica pura en `src/lib/rentabilidad.ts`, pantalla en `src/features/dashboard/`.
-- **Costo en la carga masiva: hecho.** Autodetección de la columna `costo` en `parseExcel.ts` + campo editable en el preview; costo opcional al seleccionar en `CargarCatalogo.tsx`. `catalogoPrecargado.ts` **no** trae costos de referencia (los pone el comerciante).
+- **Hecho en esta tanda:** dashboard de rentabilidad (`src/lib/rentabilidad.ts` + `src/features/dashboard/`), costo en toda la carga, **datos de demo** (`src/db/demo.ts`, botón en Ajustes), **productos agrupados por categoría**, **carga 2.0** (hub + buscador + "agregar toda la categoría") y **onboarding 2.0** (con categorías y costos).
+- **Para ver la app llena:** Ajustes → "Cargar datos de demo" (~14 días de cajas/ventas/movimientos). No es destructivo; se saca con "empezar de cero".
 - Próximo paso natural: **historial de ventas de la semana** (roadmap #2).
-- El catálogo precargado se edita en `src/data/catalogoPrecargado.ts`.
+- El catálogo precargado se edita en `src/data/catalogoPrecargado.ts`; el del onboarding en `src/data/catalogoInicial.ts` (`catalogoOnboarding`).
 - Convención: textos de UI siempre en archivos `*.copy.ts` por feature; español rioplatense informal (vos, tocá, cargá, la plata).
