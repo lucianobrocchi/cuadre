@@ -63,27 +63,25 @@ export function PreviewImportacion({ filas, setFilas, onImportar, importando }: 
                 className="min-w-0 flex-1 rounded-lg border border-transparent bg-cuadre-50/60 px-2 py-1.5 font-semibold text-cuadre-900 outline-none focus:border-cuadre/30"
               />
             </div>
-            <div className="mt-2 flex items-center gap-2 pl-9">
-              <div className="relative w-28 shrink-0">
-                <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-cuadre-900/40">
-                  $
-                </span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  aria-label="Precio"
-                  value={f.precio > 0 ? formatNumero(f.precio) : ''}
-                  onChange={(e) => patch(i, { precio: parsePesos(e.target.value) })}
-                  placeholder="0"
-                  className="num w-full rounded-lg border border-transparent bg-cuadre-50/60 py-1.5 pl-5 pr-2 text-right font-semibold text-cuadre-900 outline-none focus:border-cuadre/30"
-                />
-              </div>
+            <div className="mt-2 flex items-end gap-2 pl-9">
+              <CampoMoneda
+                label={t.lblPrecio}
+                valor={f.precio}
+                onCambiar={(n) => patch(i, { precio: n })}
+              />
+              <CampoMoneda
+                label={t.lblCosto}
+                valor={f.costo ?? 0}
+                onCambiar={(n) => patch(i, { costo: n > 0 ? n : undefined })}
+              />
+            </div>
+            <div className="mt-2 pl-9">
               <input
                 type="text"
                 value={f.categoria ?? ''}
                 onChange={(e) => patch(i, { categoria: e.target.value || undefined })}
                 placeholder={t.phCategoria}
-                className="min-w-0 flex-1 rounded-lg border border-transparent bg-cuadre-50/60 px-2 py-1.5 text-sm text-cuadre-900 outline-none focus:border-cuadre/30"
+                className="w-full rounded-lg border border-transparent bg-cuadre-50/60 px-2 py-1.5 text-sm text-cuadre-900 outline-none focus:border-cuadre/30"
               />
             </div>
           </li>
@@ -106,6 +104,36 @@ export function PreviewImportacion({ filas, setFilas, onImportar, importando }: 
         </div>
       </div>
     </div>
+  );
+}
+
+function CampoMoneda({
+  label,
+  valor,
+  onCambiar,
+}: {
+  label: string;
+  valor: number;
+  onCambiar: (n: number) => void;
+}) {
+  return (
+    <label className="min-w-0 flex-1">
+      <span className="mb-0.5 block text-[11px] font-medium text-cuadre-900/45">{label}</span>
+      <span className="relative block">
+        <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-cuadre-900/40">
+          $
+        </span>
+        <input
+          type="text"
+          inputMode="numeric"
+          aria-label={label}
+          value={valor > 0 ? formatNumero(valor) : ''}
+          onChange={(e) => onCambiar(parsePesos(e.target.value))}
+          placeholder="0"
+          className="num w-full rounded-lg border border-transparent bg-cuadre-50/60 py-1.5 pl-5 pr-2 text-right font-semibold text-cuadre-900 outline-none focus:border-cuadre/30"
+        />
+      </span>
+    </label>
   );
 }
 

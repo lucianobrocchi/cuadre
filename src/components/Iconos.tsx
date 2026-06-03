@@ -63,6 +63,16 @@ export function IconoHistorial({ filled, ...props }: FillIconProps) {
   );
 }
 
+export function IconoGanancia({ filled, ...props }: FillIconProps) {
+  return (
+    <svg {...svgBase} {...props}>
+      <rect x="4" y="13" width="4" height="7" rx="1" fill={filled ? 'currentColor' : 'none'} />
+      <rect x="10" y="9" width="4" height="11" rx="1" fill={filled ? 'currentColor' : 'none'} />
+      <rect x="16" y="5" width="4" height="15" rx="1" fill={filled ? 'currentColor' : 'none'} />
+    </svg>
+  );
+}
+
 // --- Íconos genéricos ---
 
 export function IconoAtras(props: IconProps) {

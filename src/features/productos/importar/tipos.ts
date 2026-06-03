@@ -2,6 +2,8 @@
 export interface FilaImportada {
   nombre: string;
   precio: number;
+  /** Precio de compra (opcional; habilita el margen en el dashboard). */
+  costo?: number;
   /** Nombre de la categoría (texto libre; se crea/asigna al confirmar). */
   categoria?: string;
   codigoBarras?: string;

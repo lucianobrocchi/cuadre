@@ -10,7 +10,10 @@ export async function agregarProducto(p: Omit<Producto, 'id'>): Promise<number> 
   return db.productos.add({
     nombre: p.nombre.trim(),
     precio: p.precio,
+    costo: p.costo,
     emoji: p.emoji,
+    categoriaUuid: p.categoriaUuid,
+    codigoBarras: p.codigoBarras,
   });
 }
 
@@ -20,6 +23,7 @@ export async function agregarProductos(ps: Omit<Producto, 'id'>[]): Promise<void
     ps.map((p) => ({
       nombre: p.nombre.trim(),
       precio: p.precio,
+      costo: p.costo,
       emoji: p.emoji,
       categoriaUuid: p.categoriaUuid,
       codigoBarras: p.codigoBarras,

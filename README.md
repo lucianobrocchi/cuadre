@@ -15,6 +15,7 @@ Marca: **Verde Cuadre `#0F3D2E`**, tipografías **Cabinet Grotesk** (títulos, F
 |---|---|---|
 | **A — Núcleo de caja** | Sesión abrir/cerrar obligatoria, bloqueo de venta sin caja, estado siempre visible, movimientos (ingresos/egresos), cierre con descuadre, historial de cajas | ✅ Hecho y verificado |
 | **B — Productos** | Categorías + filtro en POS, editar precio al toque (long-press), importar Excel/CSV, lector de fotos con IA (mock), carga rápida desde catálogo precargado | ✅ Hecho y verificado |
+| **★ Rentabilidad** | Pestaña **Ganancia**: margen del catálogo (categoría→producto) + **ganancia real** por período (hoy / 7 días). Campo `costo` + snapshot del costo al vender. Editar costo al toque | ✅ Hecho y verificado |
 | **C — Panel de venta ágil** | Descuento %, redondeo, atajo F8, búsqueda + lector de barras, múltiples listas de precio | ⏳ Pendiente |
 | **D — Backend** | Supabase (auth + sync), permisos, **agente IA real** (fotos + facturas) | ⏳ Pendiente |
 
@@ -54,7 +55,8 @@ versión simplificada (solo vendido vs. contado) para el "ajá" inicial.
 
 - **Vender** (home): gate de caja (si no hay caja abierta, "Abrir caja"); con caja: barra de estado, chips de categoría, grid de productos (long-press = editar precio), ticket en vivo, medio de pago (efectivo/transferencia), Cobrar. Engranaje arriba = Ajustes.
 - **Caja**: abrir/cerrar sesión, estado (fondo / en caja), movimientos de efectivo, resumen del día.
-- **Productos**: lista por categoría · 3 vías para cargar → **⚡ Cargar del catálogo** (rápido), **📥 Importar de Excel o foto** (masivo), **+** (manual). Editar/borrar. Categorías que se crean al vuelo.
+- **Productos**: lista por categoría · 3 vías para cargar → **⚡ Cargar del catálogo** (rápido), **📥 Importar de Excel o foto** (masivo), **+** (manual). Editar/borrar. Categorías que se crean al vuelo. El alta manual ahora guarda **costo** y **categoría** (antes el alta manual se comía la categoría).
+- **Ganancia** (dashboard): selector de período (hoy / últimos 7 días). Arriba, **ganancia real** del período (vendido, costo, ganancia, margen %); abajo, **margen del catálogo** por categoría → producto. Tocás un producto y le ponés el costo ahí mismo. Necesita que los productos tengan `costo` cargado.
 - **Historial**: cajas cerradas con su descuadre y detalle (apertura/cierre, fondo, ventas, ingresos, salidas, esperado, contado).
 - **Ajustes**: nombre del kiosco, fondo inicial por defecto, ir a productos, empezar de cero.
 
@@ -62,19 +64,19 @@ versión simplificada (solo vendido vs. contado) para el "ajá" inicial.
 
 Tablas sincronizables llevan `uuid · updatedAt · dirty · deleted` (listo para el sync de la Fase D, last-write-wins).
 
-- **productos**: `id, nombre, precio, emoji?, categoriaUuid?, codigoBarras?`
+- **productos**: `id, nombre, precio, costo?, emoji?, categoriaUuid?, codigoBarras?`
 - **categorias**: `id, uuid, nombre, orden, emoji?`
-- **ventas**: `id, fecha, items[{ productoId, nombre, precio, cantidad }], total, medioPago, cajaUuid`
+- **ventas**: `id, fecha, items[{ productoId, nombre, precio, costo?, cantidad }], total, medioPago, cajaUuid` — el `costo` se copia al vender (snapshot) para que la ganancia histórica no cambie si después tocás el costo.
 - **cajas** (sesiones): `id, uuid, estado, montoInicial, abiertaEn, cerradaEn?, ventasEfectivo, ventasTransferencia, ingresosEfectivo, egresosEfectivo, esperadoEfectivo, contadoEfectivo, diferencia, estadoCuadre`
 - **movimientos**: `id, uuid, cajaUuid, tipo (ingreso|egreso), monto, categoria, nota?, fecha`
 - **config**: `nombreKiosco, fondoInicial, onboardingCompletado`
 
-> Migración: las tablas v1 `egresos`/`cierres` quedaron reemplazadas por `movimientos`/`cajas`. Dexie migra v1→v2→v3 sin perder datos.
+> Migración: las tablas v1 `egresos`/`cierres` quedaron reemplazadas por `movimientos`/`cajas`. Dexie migra v1→v2→v3 sin perder datos. El `costo` (productos) y el `costo` snapshot (items de venta) son campos **no indexados**: se sumaron sin bump de schema (sigue en **v3**); los productos viejos quedan sin costo hasta que se lo cargues.
 
 ## Carga de productos (3 vías, "subida al 200%")
 
-1. **Catálogo precargado** (`src/data/catalogoPrecargado.ts`): **17 categorías, ~230 productos** de kiosco/almacén argentino. Tocás los que vendés (multi-select por categoría) → "Agregar N" → alta masiva en segundos. Detecta duplicados, precio editable inline.
-2. **Excel/CSV** (`importar/parseExcel.ts`): 100% local (SheetJS, carga diferida). Autodetecta columnas → preview editable → alta masiva.
+1. **Catálogo precargado** (`src/data/catalogoPrecargado.ts`): **17 categorías, ~230 productos** de kiosco/almacén argentino. Tocás los que vendés (multi-select por categoría) → "Agregar N" → alta masiva en segundos. Detecta duplicados; precio y **costo opcional** editables inline.
+2. **Excel/CSV** (`importar/parseExcel.ts`): 100% local (SheetJS, carga diferida). Autodetecta columnas (nombre, precio, **costo**, categoría, código) → preview editable → alta masiva.
 3. **Foto del cuaderno** (`importar/parseFoto.ts`): mismo flujo; hoy mock, en Fase D se conecta a la IA.
 
 ## Estructura
@@ -82,10 +84,10 @@ Tablas sincronizables llevan `uuid · updatedAt · dirty · deleted` (listo para
 ```
 src/
 ├─ db/            Dexie: db.ts, types.ts, config.ts, productos.ts, ventas.ts, cajas.ts, movimientos.ts, categorias.ts
-├─ lib/           Lógica pura: caja.ts (cuentas del cierre), cierre.ts (estados), fecha.ts, format.ts, medios.ts, uuid.ts
+├─ lib/           Lógica pura: caja.ts (cuentas del cierre), cierre.ts (estados), rentabilidad.ts (márgenes + ganancia), fecha.ts, format.ts, medios.ts, uuid.ts
 ├─ data/          catalogoInicial.ts (onboarding), catalogoPrecargado.ts (carga rápida)
 ├─ components/    UI compartida: Header, BottomNav, Sheet, InputPlata, ResultadoCierre, Iconos, Logo, Pantalla
-└─ features/      onboarding · pos · caja · productos (+ importar/) · resumen · historial · ajustes
+└─ features/      onboarding · pos · caja · productos (+ importar/) · dashboard · resumen · historial · ajustes
                   Cada feature con su *.copy.ts (todos los textos, en rioplatense informal).
 ```
 
@@ -99,9 +101,9 @@ src/
 
 ## Roadmap (lo que sigue, en orden acordado)
 
-1. **Dashboard de rentabilidad** — el kiosquero ve el **margen por categoría** y, dentro, **por producto**.
-   - ⚠️ Requiere agregar el campo **`costo`** (precio de compra) a `Producto`. Margen = precio − costo. Los productos ya están divididos por categoría (`categoriaUuid`), así que la agregación por categoría es directa.
-   - **Pro**: dashboard básico, lindo y fácil. **Full**: ejecutivo avanzado.
+1. ✅ **Dashboard de rentabilidad** *(hecho y verificado)* — pestaña **Ganancia**: margen del catálogo (por categoría y por producto) + **ganancia real** del período (hoy / 7 días). Se agregó `costo` a `Producto` y un **snapshot del costo** en cada venta (la ganancia histórica no cambia si después tocás el costo; las ventas viejas usan el costo actual como respaldo). El costo se carga/edita desde el form de producto y desde el propio dashboard.
+   - El `costo` se carga **producto por producto** (form / dashboard), en la **carga rápida del catálogo** (campo opcional al seleccionar) y en la **importación Excel/foto** (autodetecta la columna *costo* y se edita en el preview).
+   - **Pro**: este dashboard, lindo y simple. **Full**: ejecutivo avanzado (tendencias, comparativas por semana/mes).
 2. **Historial de ventas de la semana** — vista de los últimos 7 días.
 3. **Onboarding rework** — se retoma cuando la app esté más terminada (decisión del usuario).
 4. **Fase C — panel de venta ágil**: descuento %, redondeo auto/manual, atajo **F8** para cobrar, búsqueda + **lector de barras** (el campo `codigoBarras` ya existe), **múltiples listas de precio** (Minorista/Mayorista).
@@ -111,6 +113,8 @@ src/
 ## Para retomar en otra conversación
 
 - Todo el código está en el repo (`main`). Build verificado.
-- Próximo paso natural: **dashboard con márgenes** → primero sumar `costo` a `Producto` (db/types.ts + ProductoForm + carga), después la pantalla de dashboard.
+- **Dashboard de rentabilidad: hecho.** Lógica pura en `src/lib/rentabilidad.ts`, pantalla en `src/features/dashboard/`.
+- **Costo en la carga masiva: hecho.** Autodetección de la columna `costo` en `parseExcel.ts` + campo editable en el preview; costo opcional al seleccionar en `CargarCatalogo.tsx`. `catalogoPrecargado.ts` **no** trae costos de referencia (los pone el comerciante).
+- Próximo paso natural: **historial de ventas de la semana** (roadmap #2).
 - El catálogo precargado se edita en `src/data/catalogoPrecargado.ts`.
 - Convención: textos de UI siempre en archivos `*.copy.ts` por feature; español rioplatense informal (vos, tocá, cargá, la plata).

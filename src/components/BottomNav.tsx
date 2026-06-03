@@ -1,11 +1,18 @@
-import { IconoCaja, IconoHistorial, IconoProductos, IconoVender } from './Iconos';
+import {
+  IconoCaja,
+  IconoGanancia,
+  IconoHistorial,
+  IconoProductos,
+  IconoVender,
+} from './Iconos';
 
-export type Tab = 'vender' | 'caja' | 'productos' | 'historial';
+export type Tab = 'vender' | 'caja' | 'productos' | 'ganancia' | 'historial';
 
 const TABS: { id: Tab; label: string; Icono: typeof IconoVender }[] = [
   { id: 'vender', label: 'Vender', Icono: IconoVender },
   { id: 'caja', label: 'Caja', Icono: IconoCaja },
   { id: 'productos', label: 'Productos', Icono: IconoProductos },
+  { id: 'ganancia', label: 'Ganancia', Icono: IconoGanancia },
   { id: 'historial', label: 'Historial', Icono: IconoHistorial },
 ];
 

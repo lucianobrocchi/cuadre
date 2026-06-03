@@ -51,6 +51,7 @@ export function ImportarProductos({ onAtras }: { onAtras: () => void }) {
       incluidas.map((f) => ({
         nombre: f.nombre.trim(),
         precio: f.precio,
+        costo: f.costo,
         categoriaUuid: f.categoria
           ? mapaCat.get(f.categoria.trim().toLowerCase())
           : undefined,

@@ -12,6 +12,7 @@ import { cargarCopy as t } from './cargar.copy';
 interface Elegido {
   nombre: string;
   precio: number;
+  costo?: number;
   categoria: string;
   emoji: string;
 }
@@ -47,6 +48,17 @@ export function CargarCatalogo({ onAtras }: { onAtras: () => void }) {
     });
   }
 
+  function setCosto(nombre: string, costo: number) {
+    const key = nombre.toLowerCase();
+    setSeleccion((prev) => {
+      const actual = prev.get(key);
+      if (!actual) return prev;
+      const m = new Map(prev);
+      m.set(key, { ...actual, costo: costo > 0 ? costo : undefined });
+      return m;
+    });
+  }
+
   async function agregar() {
     const items = [...seleccion.values()];
     if (items.length === 0) return;
@@ -55,6 +67,7 @@ export function CargarCatalogo({ onAtras }: { onAtras: () => void }) {
       items.map((i) => ({
         nombre: i.nombre,
         precio: i.precio,
+        costo: i.costo,
         emoji: i.emoji,
         categoriaUuid: mapaCat.get(i.categoria.toLowerCase()),
       })),
@@ -138,53 +151,73 @@ export function CargarCatalogo({ onAtras }: { onAtras: () => void }) {
             return (
               <li
                 key={item.nombre}
-                className={`card flex items-center gap-2 p-2.5 transition ${
-                  sel ? 'ring-2 ring-cuadre' : ''
-                } ${yaExiste ? 'opacity-55' : ''}`}
+                className={`card p-2.5 transition ${sel ? 'ring-2 ring-cuadre' : ''} ${
+                  yaExiste ? 'opacity-55' : ''
+                }`}
               >
-                <button
-                  type="button"
-                  disabled={yaExiste}
-                  onClick={() => toggle(item.nombre, item.precio, item.emoji)}
-                  className="flex min-w-0 flex-1 items-center gap-3 py-1 text-left disabled:cursor-default"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cuadre-50 text-2xl">
-                    {item.emoji}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate font-semibold text-cuadre-900">
-                      {item.nombre}
-                    </span>
-                    {yaExiste ? (
-                      <span className="text-sm font-semibold text-cuadra">{t.yaCargado}</span>
-                    ) : (
-                      !sel && (
-                        <span className="num block text-sm text-cuadre-900/40">
-                          {formatPesos(item.precio)}
-                        </span>
-                      )
-                    )}
-                  </span>
-                </button>
-
-                {sel && elegido && (
-                  <PrecioMini
-                    valor={elegido.precio}
-                    onCambiar={(n) => setPrecio(item.nombre, n)}
-                  />
-                )}
-
-                {!yaExiste && (
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
+                    disabled={yaExiste}
                     onClick={() => toggle(item.nombre, item.precio, item.emoji)}
-                    aria-label={sel ? `Quitar ${item.nombre}` : `Agregar ${item.nombre}`}
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${
-                      sel ? 'bg-cuadre text-white' : 'border-2 border-cuadre/20 text-transparent'
-                    }`}
+                    className="flex min-w-0 flex-1 items-center gap-3 py-1 text-left disabled:cursor-default"
                   >
-                    <IconoCheck width={16} height={16} strokeWidth={3} />
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cuadre-50 text-2xl">
+                      {item.emoji}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold text-cuadre-900">
+                        {item.nombre}
+                      </span>
+                      {yaExiste ? (
+                        <span className="text-sm font-semibold text-cuadra">{t.yaCargado}</span>
+                      ) : (
+                        !sel && (
+                          <span className="num block text-sm text-cuadre-900/40">
+                            {formatPesos(item.precio)}
+                          </span>
+                        )
+                      )}
+                    </span>
                   </button>
+
+                  {!yaExiste && (
+                    <button
+                      type="button"
+                      onClick={() => toggle(item.nombre, item.precio, item.emoji)}
+                      aria-label={sel ? `Quitar ${item.nombre}` : `Agregar ${item.nombre}`}
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${
+                        sel ? 'bg-cuadre text-white' : 'border-2 border-cuadre/20 text-transparent'
+                      }`}
+                    >
+                      <IconoCheck width={16} height={16} strokeWidth={3} />
+                    </button>
+                  )}
+                </div>
+
+                {sel && elegido && (
+                  <div className="mt-2 flex flex-wrap items-end gap-2 pl-[3.25rem]">
+                    <MiniMoneda
+                      label={t.precio}
+                      valor={elegido.precio}
+                      onCambiar={(n) => setPrecio(item.nombre, n)}
+                    />
+                    <MiniMoneda
+                      label={t.costo}
+                      valor={elegido.costo ?? 0}
+                      onCambiar={(n) => setCosto(item.nombre, n)}
+                    />
+                    {elegido.costo != null &&
+                      elegido.costo > 0 &&
+                      elegido.precio > 0 &&
+                      elegido.costo < elegido.precio && (
+                        <span className="pb-2 text-sm font-semibold text-cuadra">
+                          {t.gananciaPct(
+                            Math.round(((elegido.precio - elegido.costo) / elegido.precio) * 100),
+                          )}
+                        </span>
+                      )}
+                  </div>
                 )}
               </li>
             );
@@ -212,21 +245,32 @@ export function CargarCatalogo({ onAtras }: { onAtras: () => void }) {
   );
 }
 
-function PrecioMini({ valor, onCambiar }: { valor: number; onCambiar: (n: number) => void }) {
+function MiniMoneda({
+  label,
+  valor,
+  onCambiar,
+}: {
+  label: string;
+  valor: number;
+  onCambiar: (n: number) => void;
+}) {
   return (
-    <div className="relative w-24 shrink-0">
-      <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-cuadre-900/40">
-        $
+    <label className="block w-24">
+      <span className="mb-0.5 block text-[11px] font-medium text-cuadre-900/45">{label}</span>
+      <span className="relative block">
+        <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-cuadre-900/40">
+          $
+        </span>
+        <input
+          type="text"
+          inputMode="numeric"
+          aria-label={label}
+          value={valor > 0 ? formatNumero(valor) : ''}
+          onChange={(e) => onCambiar(parsePesos(e.target.value))}
+          placeholder="0"
+          className="num w-full rounded-xl border-2 border-cuadre/15 py-2 pl-5 pr-2 text-right font-semibold text-cuadre-900 outline-none focus:border-cuadre"
+        />
       </span>
-      <input
-        type="text"
-        inputMode="numeric"
-        aria-label="Precio"
-        value={valor > 0 ? formatNumero(valor) : ''}
-        onChange={(e) => onCambiar(parsePesos(e.target.value))}
-        placeholder="0"
-        className="num w-full rounded-xl border-2 border-cuadre/15 py-2 pl-5 pr-2 text-right font-semibold text-cuadre-900 outline-none focus:border-cuadre"
-      />
-    </div>
+    </label>
   );
 }

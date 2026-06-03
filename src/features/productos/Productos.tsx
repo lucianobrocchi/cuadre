@@ -21,6 +21,7 @@ import { productosCopy as t } from './productos.copy';
 interface DatosProducto {
   nombre: string;
   precio: number;
+  costo?: number;
   emoji?: string;
   categoriaUuid?: string;
 }

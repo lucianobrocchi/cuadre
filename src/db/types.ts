@@ -18,6 +18,8 @@ export interface Producto {
   id?: number;
   nombre: string;
   precio: number;
+  /** Precio de compra. Opcional: habilita el cálculo de margen y ganancia. */
+  costo?: number;
   emoji?: string;
   /** Categoría a la que pertenece (uuid estable). */
   categoriaUuid?: string;
@@ -36,6 +38,8 @@ export interface VentaItem {
   productoId: number;
   nombre: string;
   precio: number;
+  /** Costo al momento de vender (snapshot). Mantiene exacta la ganancia histórica. */
+  costo?: number;
   cantidad: number;
 }
 

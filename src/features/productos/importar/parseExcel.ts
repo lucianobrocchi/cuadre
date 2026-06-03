@@ -3,7 +3,8 @@ import type { FilaImportada } from './tipos';
 // Alias de headers comunes (en español e inglés) para autodetectar columnas.
 const ALIAS = {
   nombre: ['nombre', 'producto', 'descripcion', 'detalle', 'articulo', 'item', 'name'],
-  precio: ['precio', 'precio venta', 'venta', 'price', 'importe', 'valor', 'pvp', 'p venta'],
+  precio: ['precio', 'precio venta', 'precio de venta', 'venta', 'price', 'importe', 'valor', 'pvp', 'p venta'],
+  costo: ['costo', 'costos', 'precio costo', 'precio de costo', 'precio compra', 'precio de compra', 'compra', 'costo unitario', 'cost', 'p compra'],
   categoria: ['categoria', 'rubro', 'tipo', 'category', 'familia'],
   codigo: ['codigo', 'codigo de barras', 'barras', 'ean', 'sku', 'code', 'cod'],
 };
@@ -54,6 +55,7 @@ export async function parseExcel(file: File): Promise<FilaImportada[]> {
     idxPrecio = 1;
     dataStart = 0;
   }
+  const idxCosto = findCol(ALIAS.costo);
   const idxCat = findCol(ALIAS.categoria);
   const idxCod = findCol(ALIAS.codigo);
 
@@ -62,9 +64,11 @@ export async function parseExcel(file: File): Promise<FilaImportada[]> {
     const row = rows[i] as unknown[];
     const nombre = String(row[idxNombre] ?? '').trim();
     if (!nombre) continue;
+    const costo = idxCosto >= 0 ? parsePrecio(row[idxCosto]) : 0;
     out.push({
       nombre,
       precio: parsePrecio(row[idxPrecio]),
+      costo: costo > 0 ? costo : undefined,
       categoria: idxCat >= 0 ? String(row[idxCat] ?? '').trim() || undefined : undefined,
       codigoBarras: idxCod >= 0 ? String(row[idxCod] ?? '').trim() || undefined : undefined,
       incluir: true,

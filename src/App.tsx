@@ -7,6 +7,7 @@ import { Onboarding } from './features/onboarding/Onboarding';
 import { PuntoDeVenta } from './features/pos/PuntoDeVenta';
 import { Caja } from './features/caja/Caja';
 import { Productos } from './features/productos/Productos';
+import { Dashboard } from './features/dashboard/Dashboard';
 import { Historial } from './features/historial/Historial';
 import { Ajustes } from './features/ajustes/Ajustes';
 
@@ -56,6 +57,7 @@ function AppShell({
       )}
       {tab === 'caja' && <Caja fondoInicial={fondoInicial} />}
       {tab === 'productos' && <Productos />}
+      {tab === 'ganancia' && <Dashboard />}
       {tab === 'historial' && <Historial />}
 
       <BottomNav activa={tab} onCambiar={setTab} />

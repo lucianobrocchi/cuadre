@@ -14,6 +14,13 @@ export function finDelDia(ts: number = Date.now()): number {
   return d.getTime();
 }
 
+const MS_DIA = 24 * 60 * 60 * 1000;
+
+/** Rango [desde, hasta] que cubre los últimos `dias` días, incluyendo hoy. */
+export function rangoUltimosDias(dias: number): [number, number] {
+  return [inicioDelDia(Date.now() - (dias - 1) * MS_DIA), finDelDia()];
+}
+
 const FMT_FECHA = new Intl.DateTimeFormat('es-AR', {
   day: '2-digit',
   month: '2-digit',

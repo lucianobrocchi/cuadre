@@ -4,11 +4,13 @@ import type { Producto } from '../../db/types';
 import { agregarCategoria, listarCategorias } from '../../db/categorias';
 import { emojisSugeridos } from '../../data/catalogoInicial';
 import { InputPlata } from '../../components/InputPlata';
+import { formatPesos } from '../../lib/format';
 import { productosCopy as t } from './productos.copy';
 
 interface DatosProducto {
   nombre: string;
   precio: number;
+  costo?: number;
   emoji?: string;
   categoriaUuid?: string;
 }
@@ -23,6 +25,7 @@ export function ProductoForm({ inicial, onGuardar, onBorrar }: Props) {
   const categorias = useLiveQuery(() => listarCategorias(), [], []);
   const [nombre, setNombre] = useState(inicial?.nombre ?? '');
   const [precio, setPrecio] = useState(inicial?.precio ?? 0);
+  const [costo, setCosto] = useState(inicial?.costo ?? 0);
   const [emoji, setEmoji] = useState<string | undefined>(inicial?.emoji);
   const [categoriaUuid, setCategoriaUuid] = useState<string | undefined>(inicial?.categoriaUuid);
   const [creandoCat, setCreandoCat] = useState(false);
@@ -61,6 +64,23 @@ export function ProductoForm({ inicial, onGuardar, onBorrar }: Props) {
           {t.precioLabel}
         </label>
         <InputPlata id="prod-precio" valor={precio} onCambiar={setPrecio} placeholder="0" />
+      </div>
+
+      <div>
+        <label htmlFor="prod-costo" className="mb-2 block font-semibold text-cuadre-900">
+          {t.costoLabel}{' '}
+          <span className="font-normal text-cuadre-900/40">· {t.costoOpcional}</span>
+        </label>
+        <InputPlata id="prod-costo" valor={costo} onCambiar={setCosto} placeholder="0" />
+        {costo > 0 &&
+          precio > 0 &&
+          (costo < precio ? (
+            <p className="mt-1.5 text-sm font-semibold text-cuadra">
+              {t.gananciaHint(formatPesos(precio - costo), Math.round(((precio - costo) / precio) * 100))}
+            </p>
+          ) : (
+            <p className="mt-1.5 text-sm font-semibold text-falta">{t.costoMayorPrecio}</p>
+          ))}
       </div>
 
       {/* Categoría */}
@@ -138,7 +158,15 @@ export function ProductoForm({ inicial, onGuardar, onBorrar }: Props) {
       <button
         type="button"
         disabled={!valido}
-        onClick={() => onGuardar({ nombre: nombre.trim(), precio, emoji, categoriaUuid })}
+        onClick={() =>
+          onGuardar({
+            nombre: nombre.trim(),
+            precio,
+            costo: costo > 0 ? costo : undefined,
+            emoji,
+            categoriaUuid,
+          })
+        }
         className="btn-primario mt-1"
       >
         {t.guardar}

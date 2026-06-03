@@ -15,7 +15,10 @@ export function useTicket() {
           it.productoId === id ? { ...it, cantidad: it.cantidad + 1 } : it,
         );
       }
-      return [...prev, { productoId: id, nombre: p.nombre, precio: p.precio, cantidad: 1 }];
+      return [
+        ...prev,
+        { productoId: id, nombre: p.nombre, precio: p.precio, costo: p.costo, cantidad: 1 },
+      ];
     });
   }, []);
 

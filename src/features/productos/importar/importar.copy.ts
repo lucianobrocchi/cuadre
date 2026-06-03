@@ -4,7 +4,7 @@ export const importarCopy = {
   // Elegir fuente
   fuenteTitulo: '¿De dónde traés tus productos?',
   excelTitulo: 'Desde Excel o planilla',
-  excelSub: 'Subí un .xlsx o .csv. Detecto nombre, precio y categoría solos.',
+  excelSub: 'Subí un .xlsx o .csv. Detecto nombre, precio, costo y categoría solos.',
   fotoTitulo: 'Desde una foto del cuaderno',
   fotoSub: 'Sacale una foto a tu lista y la armamos sola.',
   fotoBadge: 'IA',
@@ -31,7 +31,9 @@ export const importarCopy = {
   listoSub: (n: number) => `Se importaron ${n} ${n === 1 ? 'producto' : 'productos'}.`,
   volver: 'Volver a productos',
 
-  // Placeholders de edición
+  // Placeholders / labels de edición
   phNombre: 'Nombre',
   phCategoria: 'Categoría',
+  lblPrecio: 'Precio',
+  lblCosto: 'Costo',
 };
