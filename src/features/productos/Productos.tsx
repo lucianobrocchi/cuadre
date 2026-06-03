@@ -14,6 +14,7 @@ import { Sheet } from '../../components/Sheet';
 import { IconoChevron, IconoMas } from '../../components/Iconos';
 import { formatPesos } from '../../lib/format';
 import { ImportarProductos } from './importar/ImportarProductos';
+import { CargarCatalogo } from './CargarCatalogo';
 import { ProductoForm } from './ProductoForm';
 import { productosCopy as t } from './productos.copy';
 
@@ -25,15 +26,29 @@ interface DatosProducto {
 }
 
 export function Productos() {
-  const [vista, setVista] = useState<'lista' | 'importar'>('lista');
+  const [vista, setVista] = useState<'lista' | 'importar' | 'catalogo'>('lista');
 
   if (vista === 'importar') {
     return <ImportarProductos onAtras={() => setVista('lista')} />;
   }
-  return <ListaProductos onImportar={() => setVista('importar')} />;
+  if (vista === 'catalogo') {
+    return <CargarCatalogo onAtras={() => setVista('lista')} />;
+  }
+  return (
+    <ListaProductos
+      onImportar={() => setVista('importar')}
+      onCargarCatalogo={() => setVista('catalogo')}
+    />
+  );
 }
 
-function ListaProductos({ onImportar }: { onImportar: () => void }) {
+function ListaProductos({
+  onImportar,
+  onCargarCatalogo,
+}: {
+  onImportar: () => void;
+  onCargarCatalogo: () => void;
+}) {
   const productos = useLiveQuery(() => listarProductos(), [], []);
   const categorias = useLiveQuery(() => listarCategorias(), [], []);
   const [sheetAbierto, setSheetAbierto] = useState(false);
@@ -85,9 +100,14 @@ function ListaProductos({ onImportar }: { onImportar: () => void }) {
       />
 
       <Pantalla>
-        <button type="button" onClick={onImportar} className="btn-secundario mb-3">
-          📥 Importar desde Excel o foto
-        </button>
+        <div className="mb-3 flex flex-col gap-2">
+          <button type="button" onClick={onCargarCatalogo} className="btn-primario">
+            ⚡ Cargar del catálogo
+          </button>
+          <button type="button" onClick={onImportar} className="btn-secundario">
+            📥 Importar de Excel o foto
+          </button>
+        </div>
 
         {productos.length === 0 ? (
           <div className="mt-12 flex flex-col items-center text-center">
