@@ -25,4 +25,15 @@ export const productosCopy = {
   // Pantalla
   importar: 'Importar',
   gestionarCategorias: 'Categorías',
+  agregarProductos: 'Agregar productos',
+
+  // Hub para elegir cómo agregar
+  hubTitulo: 'Agregar productos',
+  hubCatalogoTit: 'Del catálogo',
+  hubCatalogoSub: 'Tocá lo que vendés de una lista ya armada. Lo más rápido.',
+  hubExcelTit: 'Desde Excel o foto',
+  hubExcelSub: 'Subí una planilla o sacale una foto a tu lista de precios.',
+  hubExcelBadge: 'IA',
+  hubManualTit: 'Uno a mano',
+  hubManualSub: 'Nombre, precio y costo. Para cargar de a uno.',
 };
