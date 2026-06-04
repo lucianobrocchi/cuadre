@@ -13,6 +13,7 @@ import { Pantalla } from '../../components/Pantalla';
 import { Sheet } from '../../components/Sheet';
 import { IconoChevron, IconoMas } from '../../components/Iconos';
 import { formatPesos } from '../../lib/format';
+import { estadoStock } from '../../lib/stock';
 import { ImportarProductos } from './importar/ImportarProductos';
 import { CargarCatalogo } from './CargarCatalogo';
 import { ProductoForm } from './ProductoForm';
@@ -24,6 +25,8 @@ interface DatosProducto {
   costo?: number;
   emoji?: string;
   categoriaUuid?: string;
+  stock?: number;
+  stockMin?: number;
 }
 
 export function Productos() {
@@ -181,10 +184,27 @@ function ProductoFila({ p, onClick }: { p: Producto; onClick: () => void }) {
             <span className="num block text-sm text-cuadre-900/45">costo {formatPesos(p.costo)}</span>
           )}
         </span>
+        <StockBadge p={p} />
         <span className="num font-bold text-cuadre-900">{formatPesos(p.precio)}</span>
         <IconoChevron width={20} height={20} className="shrink-0 text-cuadre-900/25" />
       </button>
     </li>
+  );
+}
+
+function StockBadge({ p }: { p: Producto }) {
+  if (p.stock == null) return null;
+  const estado = estadoStock(p);
+  const cls =
+    estado === 'sin'
+      ? 'bg-falta/10 text-falta'
+      : estado === 'bajo'
+        ? 'bg-sobra/15 text-sobra'
+        : 'bg-cuadre-50 text-cuadre-900/55';
+  return (
+    <span className={`num shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${cls}`}>
+      {estado === 'sin' ? t.sinStockBadge : t.stockBadge(p.stock)}
+    </span>
   );
 }
 

@@ -61,6 +61,24 @@ async function asegurarCostos(productos: Producto[], r: () => number): Promise<v
   });
 }
 
+/**
+ * Le pone stock de ejemplo a los productos que no lleven, para mostrar el
+ * inventario lleno: la mayoría con stock holgado y algunos bajos/agotados
+ * para que se vean las alertas. No toca los que ya llevan stock.
+ */
+async function asegurarStock(productos: Producto[], r: () => number): Promise<void> {
+  const sinStock = productos.filter((p) => p.stock == null && p.id != null);
+  await db.transaction('rw', db.productos, async () => {
+    for (const p of sinStock) {
+      const sorteo = r();
+      // 10% agotado, 18% bajo, el resto con stock sano.
+      const stock = sorteo < 0.1 ? 0 : sorteo < 0.28 ? rint(r, 1, 3) : rint(r, 8, 60);
+      await db.productos.update(p.id!, { stock });
+      p.stock = stock;
+    }
+  });
+}
+
 export interface ResultadoDemo {
   dias: number;
   cajas: number;
@@ -75,6 +93,7 @@ export async function cargarDatosDemo(dias = 14): Promise<ResultadoDemo> {
   const productos = await db.productos.toArray();
   if (productos.length === 0) return { dias: 0, cajas: 0, ventas: 0 };
   await asegurarCostos(productos, r);
+  await asegurarStock(productos, r);
 
   const egresoCats: CategoriaMovimiento[] = ['proveedor', 'gasto', 'retiro'];
   const cajasNuevas: CajaSesion[] = [];

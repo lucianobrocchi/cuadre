@@ -25,6 +25,13 @@ export interface Producto {
   categoriaUuid?: string;
   /** Código de barras (para el lector). */
   codigoBarras?: string;
+  /**
+   * Unidades en mano. Opcional: si es `undefined`, el producto NO lleva stock
+   * (no se descuenta al vender ni genera alertas). Si es un número, se lleva.
+   */
+  stock?: number;
+  /** Umbral de aviso de stock bajo. Si falta, se usa `STOCK_MIN_DEFAULT`. */
+  stockMin?: number;
 }
 
 export interface Categoria extends Sincronizable {

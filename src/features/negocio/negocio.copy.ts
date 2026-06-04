@@ -75,6 +75,19 @@ export const negocioCopy = {
   insightSinCosto: (n: number) => `Te faltan costos en ${n} ${n === 1 ? 'producto' : 'productos'}: cargalos para ver tu ganancia real.`,
   insightTicket: (plata: string) => `Cada cliente te deja ${plata} en promedio.`,
 
+  // Inventario / stock
+  inventarioTitulo: 'Inventario',
+  inventarioSub: 'La plata parada en mercadería',
+  invValorCosto: 'Valor a costo',
+  invValorVenta: 'A precio de venta',
+  invUnidades: (n: number) => `${n} ${n === 1 ? 'unidad' : 'unidades'} en mano`,
+  invSinDatosTitulo: 'Todavía no llevás stock',
+  invSinDatosSub: 'Activá "Llevar stock" al cargar o editar un producto y vas a ver acá la plata invertida y qué reponer.',
+  invSinStock: 'Se acabaron',
+  invBajoStock: 'Por reponer pronto',
+  invQuedan: (n: number) => `quedan ${n}`,
+  invTodoOk: 'Todo con stock sano 👌',
+
   // Catálogo (márgenes) — viene de la ex pestaña Ganancia
   catalogoTitulo: 'Margen del catálogo',
   catalogoSub: 'Lo que te deja cada cosa. Tocá un producto para ponerle el costo.',

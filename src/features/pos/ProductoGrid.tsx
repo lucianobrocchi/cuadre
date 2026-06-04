@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import type { Producto } from '../../db/types';
 import { formatPesos } from '../../lib/format';
+import { estadoStock } from '../../lib/stock';
 
 interface Props {
   productos: Producto[];
@@ -70,9 +71,27 @@ export function ProductoGrid({ productos, onAgregar, enTicket, onEditarPrecio }:
             <span className="num text-sm font-medium text-cuadre-900/60">
               {formatPesos(p.precio)}
             </span>
+            <StockChip p={p} />
           </button>
         );
       })}
     </div>
+  );
+}
+
+/** Aviso de stock en la card del POS: solo si lleva stock y está bajo o agotado. */
+function StockChip({ p }: { p: Producto }) {
+  if (p.stock == null) return null;
+  const estado = estadoStock(p);
+  if (estado === 'ok') return null;
+  const sin = estado === 'sin';
+  return (
+    <span
+      className={`num absolute bottom-1.5 left-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+        sin ? 'bg-falta/15 text-falta' : 'bg-sobra/20 text-sobra'
+      }`}
+    >
+      {sin ? 'sin stock' : `quedan ${p.stock}`}
+    </span>
   );
 }

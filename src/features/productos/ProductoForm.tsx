@@ -13,6 +13,8 @@ interface DatosProducto {
   costo?: number;
   emoji?: string;
   categoriaUuid?: string;
+  stock?: number;
+  stockMin?: number;
 }
 
 interface Props {
@@ -30,6 +32,9 @@ export function ProductoForm({ inicial, onGuardar, onBorrar }: Props) {
   const [categoriaUuid, setCategoriaUuid] = useState<string | undefined>(inicial?.categoriaUuid);
   const [creandoCat, setCreandoCat] = useState(false);
   const [nuevaCat, setNuevaCat] = useState('');
+  const [llevaStock, setLlevaStock] = useState(inicial?.stock != null);
+  const [stock, setStock] = useState(inicial?.stock ?? 0);
+  const [stockMin, setStockMin] = useState(inicial?.stockMin ?? 0);
 
   const valido = nombre.trim().length > 0 && precio > 0;
 
@@ -81,6 +86,37 @@ export function ProductoForm({ inicial, onGuardar, onBorrar }: Props) {
           ) : (
             <p className="mt-1.5 text-sm font-semibold text-falta">{t.costoMayorPrecio}</p>
           ))}
+      </div>
+
+      {/* Stock */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setLlevaStock((v) => !v)}
+          className="flex w-full items-center gap-3"
+        >
+          <span
+            className={`flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition ${
+              llevaStock ? 'bg-cuadre' : 'bg-cuadre-900/15'
+            }`}
+          >
+            <span
+              className={`h-5 w-5 rounded-full bg-white shadow transition ${
+                llevaStock ? 'translate-x-5' : ''
+              }`}
+            />
+          </span>
+          <span className="min-w-0 flex-1 text-left">
+            <span className="block font-semibold text-cuadre-900">{t.stockToggle}</span>
+            <span className="block text-sm text-cuadre-900/50">{t.stockToggleSub}</span>
+          </span>
+        </button>
+        {llevaStock && (
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <Contador label={t.stockActualLabel} valor={stock} onCambiar={setStock} />
+            <Contador label={t.stockMinLabel} valor={stockMin} onCambiar={setStockMin} sufijo={t.stockMinSufijo} />
+          </div>
+        )}
       </div>
 
       {/* Categoría */}
@@ -165,6 +201,8 @@ export function ProductoForm({ inicial, onGuardar, onBorrar }: Props) {
             costo: costo > 0 ? costo : undefined,
             emoji,
             categoriaUuid,
+            stock: llevaStock ? Math.max(0, Math.round(stock)) : undefined,
+            stockMin: llevaStock && stockMin > 0 ? Math.round(stockMin) : undefined,
           })
         }
         className="btn-primario mt-1"
@@ -181,6 +219,51 @@ export function ProductoForm({ inicial, onGuardar, onBorrar }: Props) {
           {t.borrar}
         </button>
       )}
+    </div>
+  );
+}
+
+function Contador({
+  label,
+  valor,
+  onCambiar,
+  sufijo,
+}: {
+  label: string;
+  valor: number;
+  onCambiar: (n: number) => void;
+  sufijo?: string;
+}) {
+  return (
+    <div>
+      <span className="mb-1.5 block text-sm font-medium text-cuadre-900/70">{label}</span>
+      <div className="flex items-center gap-2 rounded-2xl border-2 border-cuadre/15 p-1">
+        <button
+          type="button"
+          onClick={() => onCambiar(Math.max(0, valor - 1))}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cuadre-50 text-xl font-bold text-cuadre active:bg-cuadre-100"
+          aria-label="Restar"
+        >
+          −
+        </button>
+        <input
+          type="number"
+          inputMode="numeric"
+          value={valor}
+          min={0}
+          onChange={(e) => onCambiar(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+          className="num min-w-0 flex-1 bg-transparent text-center text-lg font-bold text-cuadre-900 outline-none"
+        />
+        <button
+          type="button"
+          onClick={() => onCambiar(valor + 1)}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cuadre-50 text-xl font-bold text-cuadre active:bg-cuadre-100"
+          aria-label="Sumar"
+        >
+          +
+        </button>
+      </div>
+      {sufijo && <span className="mt-1 block text-xs text-cuadre-900/40">{sufijo}</span>}
     </div>
   );
 }

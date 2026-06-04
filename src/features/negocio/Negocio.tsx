@@ -5,12 +5,13 @@ import { listarCategorias } from '../../db/categorias';
 import { ventasEntre } from '../../db/ventas';
 import { movimientosEntre } from '../../db/movimientos';
 import { cajaActiva, resumenDeCaja, type ResumenCaja } from '../../db/cajas';
-import type { CajaSesion } from '../../db/types';
+import type { CajaSesion, Producto } from '../../db/types';
 import { Header } from '../../components/Header';
 import { Pantalla } from '../../components/Pantalla';
 import { finDelDia, inicioDelDia } from '../../lib/fecha';
 import { formatPesos } from '../../lib/format';
 import { formatPct, resumenCatalogo } from '../../lib/rentabilidad';
+import { resumenInventario, type ResumenInventario } from '../../lib/stock';
 import {
   comparar,
   indexarProductos,
@@ -102,6 +103,7 @@ export function Negocio() {
     [ventas, rangos, productos],
   );
   const catalogo = useMemo(() => resumenCatalogo(productos, categorias), [productos, categorias]);
+  const inventario = useMemo(() => resumenInventario(productos), [productos]);
 
   const sinCosto = useMemo(
     () => productos.filter((p) => p.precio > 0 && p.costo == null).length,
@@ -211,6 +213,11 @@ export function Negocio() {
           <IntelProductos intel={intel} />
         </Seccion>
 
+        {/* Inventario */}
+        <Seccion titulo={t.inventarioTitulo} sub={t.inventarioSub}>
+          <Inventario inv={inventario} />
+        </Seccion>
+
         {/* Margen del catálogo (ex Ganancia) */}
         <Seccion titulo={t.catalogoTitulo} sub={t.catalogoSub}>
           <CatalogoMargenes catalogo={catalogo} />
@@ -316,6 +323,83 @@ function DeltaChip({ cmp, vsLabel }: { cmp: Comparativa; vsLabel: string }) {
     >
       {sube ? '▲' : '▼'} {pct} <span className="font-medium opacity-70">{vsLabel}</span>
     </span>
+  );
+}
+
+function Inventario({ inv }: { inv: ResumenInventario }) {
+  if (inv.rastreados === 0) {
+    return (
+      <div className="card flex flex-col items-center p-6 text-center">
+        <span className="text-4xl" aria-hidden>
+          📦
+        </span>
+        <h3 className="mt-3 font-bold text-cuadre-900">{t.invSinDatosTitulo}</h3>
+        <p className="mt-1 text-sm text-cuadre-900/55">{t.invSinDatosSub}</p>
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="card p-5">
+        <p className="text-sm font-semibold text-cuadre-900/55">{t.invValorCosto}</p>
+        <p className="num text-3xl font-extrabold text-cuadre-900">{formatPesos(inv.valorCosto)}</p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <MiniDato label={t.invValorVenta} valor={formatPesos(inv.valorVenta)} />
+          <MiniDato label="En mano" valor={t.invUnidades(inv.unidades)} />
+        </div>
+      </div>
+
+      {inv.sinStock.length === 0 && inv.bajoStock.length === 0 ? (
+        <p className="rounded-2xl bg-cuadra/8 p-3 text-center text-sm font-medium text-cuadre-900">
+          {t.invTodoOk}
+        </p>
+      ) : (
+        <>
+          {inv.sinStock.length > 0 && (
+            <ListaStock titulo={t.invSinStock} emoji="🔴" productos={inv.sinStock} tono="falta" />
+          )}
+          {inv.bajoStock.length > 0 && (
+            <ListaStock titulo={t.invBajoStock} emoji="🟠" productos={inv.bajoStock} tono="sobra" />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function ListaStock({
+  titulo,
+  emoji,
+  productos,
+  tono,
+}: {
+  titulo: string;
+  emoji: string;
+  productos: Producto[];
+  tono: 'falta' | 'sobra';
+}) {
+  return (
+    <div className="card p-4">
+      <div className="mb-2 flex items-center gap-2">
+        <span aria-hidden>{emoji}</span>
+        <h4 className={`font-bold ${tono === 'falta' ? 'text-falta' : 'text-sobra'}`}>{titulo}</h4>
+      </div>
+      <ul className="flex flex-col gap-1">
+        {productos.slice(0, 8).map((p) => (
+          <li key={p.id} className="flex items-center justify-between gap-2 text-sm">
+            <span className="min-w-0 truncate font-semibold text-cuadre-900">
+              {p.emoji ?? '🛒'} {p.nombre}
+            </span>
+            <span className={`num shrink-0 font-bold ${tono === 'falta' ? 'text-falta' : 'text-sobra'}`}>
+              {tono === 'falta' ? '0' : t.invQuedan(p.stock ?? 0)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {productos.length > 8 && (
+        <p className="mt-1 text-xs text-cuadre-900/45">{t.verMas(productos.length - 8)}</p>
+      )}
+    </div>
   );
 }
 
