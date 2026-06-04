@@ -47,6 +47,7 @@ export const historialCopy = {
 export const medioLabel: Record<MedioPago, string> = {
   efectivo: '💵 Efectivo',
   transferencia: '📱 Transferencia',
+  fiado: '📓 Fiado',
 };
 
 export const estadoCierreLabel: Record<EstadoCierre, string> = {

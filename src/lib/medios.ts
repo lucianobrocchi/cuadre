@@ -1,11 +1,24 @@
 import type { MedioPago } from '../db/types';
 
-// Medios de pago disponibles. "transferencia" cubre transferencia/QR/billetera.
-export const medios: { id: MedioPago; label: string; emoji: string }[] = [
+interface MedioInfo {
+  id: MedioPago;
+  label: string;
+  emoji: string;
+}
+
+// Medios que se eligen con el toggle del POS. "transferencia" cubre
+// transferencia/QR/billetera. El fiado tiene su propio flujo (elegir cliente).
+export const medios: MedioInfo[] = [
   { id: 'efectivo', label: 'Efectivo', emoji: '💵' },
   { id: 'transferencia', label: 'Transferencia', emoji: '📱' },
 ];
 
+const TODOS: Record<MedioPago, MedioInfo> = {
+  efectivo: { id: 'efectivo', label: 'Efectivo', emoji: '💵' },
+  transferencia: { id: 'transferencia', label: 'Transferencia', emoji: '📱' },
+  fiado: { id: 'fiado', label: 'Fiado', emoji: '📓' },
+};
+
 export function etiquetaMedio(id: MedioPago): { label: string; emoji: string } {
-  return medios.find((m) => m.id === id) ?? medios[0];
+  return TODOS[id] ?? TODOS.efectivo;
 }

@@ -61,18 +61,20 @@ versión simplificada (solo vendido vs. contado) para el "ajá" inicial.
 - **Historial**: dos vistas (control segmentado). **Ventas** (por defecto): las ventas de los **últimos 7 días** agrupadas por día — total de la semana (vendido, efectivo/transferencia, ganancia) y una tarjeta por día (total + ganancia); tocás un día y ves cada ticket (hora, medio de pago, ítems). **Cajas**: cajas cerradas con su descuadre y detalle (apertura/cierre, fondo, ventas, ingresos, salidas, esperado, contado).
 - **Ajustes**: nombre del kiosco, fondo inicial por defecto, ir a productos, **cargar datos de demo** (~14 días de ventas/cierres para ver la app llena), y empezar de cero (borra todo: productos, categorías, ventas, cajas y movimientos).
 
-## Modelo de datos (Dexie v3)
+## Modelo de datos (Dexie v4)
 
 Tablas sincronizables llevan `uuid · updatedAt · dirty · deleted` (listo para el sync de la Fase D, last-write-wins).
 
-- **productos**: `id, nombre, precio, costo?, emoji?, categoriaUuid?, codigoBarras?, stock?, stockMin?` — `stock` es **opt-in**: si está, se descuenta al vender (y se devuelve al anular) y dispara alertas de bajo/sin stock; `stockMin` es el umbral de aviso (default `STOCK_MIN_DEFAULT = 3`). Campos no indexados (sin bump de schema, sigue v3).
+- **productos**: `id, nombre, precio, costo?, emoji?, categoriaUuid?, codigoBarras?, stock?, stockMin?` — `stock` es **opt-in**: si está, se descuenta al vender (y se devuelve al anular) y dispara alertas de bajo/sin stock; `stockMin` es el umbral de aviso (default `STOCK_MIN_DEFAULT = 3`). Campos no indexados.
 - **categorias**: `id, uuid, nombre, orden, emoji?`
-- **ventas**: `id, fecha, items[{ productoId, nombre, precio, costo?, cantidad }], total, medioPago, cajaUuid` — el `costo` se copia al vender (snapshot) para que la ganancia histórica no cambie si después tocás el costo.
+- **ventas**: `id, fecha, items[{ productoId, nombre, precio, costo?, cantidad }], total, medioPago (efectivo|transferencia|fiado), cajaUuid` — el `costo` se copia al vender (snapshot) para que la ganancia histórica no cambie si después tocás el costo.
 - **cajas** (sesiones): `id, uuid, estado, montoInicial, abiertaEn, cerradaEn?, ventasEfectivo, ventasTransferencia, ingresosEfectivo, egresosEfectivo, esperadoEfectivo, contadoEfectivo, diferencia, estadoCuadre`
 - **movimientos**: `id, uuid, cajaUuid, tipo (ingreso|egreso), monto, categoria, nota?, fecha`
+- **clientes** (fiados): `id, uuid, nombre, telefono?`
+- **cuentas** (cuenta corriente): `id, uuid, clienteUuid, tipo (cargo|pago), monto, fecha, ventaId?, medioPago?, nota?` — saldo del cliente = Σ cargos − Σ pagos.
 - **config**: `nombreKiosco, fondoInicial, onboardingCompletado`
 
-> Migración: las tablas v1 `egresos`/`cierres` quedaron reemplazadas por `movimientos`/`cajas`. Dexie migra v1→v2→v3 sin perder datos. El `costo` (productos) y el `costo` snapshot (items de venta) son campos **no indexados**: se sumaron sin bump de schema (sigue en **v3**); los productos viejos quedan sin costo hasta que se lo cargues.
+> Migración: las tablas v1 `egresos`/`cierres` quedaron reemplazadas por `movimientos`/`cajas`. Dexie migra v1→v4 sin perder datos. **v4** suma `clientes`/`cuentas` (fiados). El `costo` (productos), el `costo` snapshot (items) y `stock`/`stockMin` son campos **no indexados** (se suman sin tocar el resto del schema). Una **venta fiada** (`medioPago: 'fiado'`) suma a "vendido" pero **no** a efectivo/transferencia ni a la caja; cuando el cliente paga en efectivo con caja abierta, ese pago entra como **ingreso de caja** para que el cierre cuadre.
 
 ## Carga de productos (3 vías, "subida al 200%")
 
@@ -111,7 +113,7 @@ src/
 3. ✅ **Onboarding rework** *(hecho)* — flujo: nombre → elegir del catálogo **por categorías** con **costo opcional** → venta de práctica → primer cierre → cierra invitando a la pestaña **Ganancia**. Persiste categoría + costo al terminar (`src/features/onboarding/`, catálogo curado en `catalogoInicial.ts`).
 4. **Fase C — panel de venta ágil**: descuento %, redondeo auto/manual, atajo **F8** para cobrar, búsqueda + **lector de barras** (el campo `codigoBarras` ya existe), **múltiples listas de precio** (Minorista/Mayorista).
 5. **Fase D — backend**: Supabase (auth + sync last-write-wins), **permisos granulares**, y el **agente IA real** (fotos de cuaderno + lectura de facturas con la Claude API).
-6. **Integraciones**: AFIP (factura electrónica), ticketera térmica, pago a proveedor desde el POS, etiquetas para góndola, **control de fiados**.
+6. **Integraciones**: AFIP (factura electrónica), ticketera térmica, pago a proveedor desde el POS, etiquetas para góndola. ✅ **Control de fiados** *(hecho)* — clientes con cuenta corriente: fiar desde el POS (botón **Fiar** → elegir/crear cliente), registrar pagos (el pago en efectivo entra a la caja), historial por cliente y total **en la calle** en Negocio. Lógica pura en `src/lib/fiados.ts`.
 
 ## Para retomar en otra conversación
 

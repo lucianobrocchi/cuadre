@@ -4,6 +4,7 @@ import type { MedioPago, Producto } from '../../db/types';
 import { editarPrecio, listarProductos } from '../../db/productos';
 import { listarCategorias } from '../../db/categorias';
 import { registrarVenta } from '../../db/ventas';
+import { registrarCargo } from '../../db/fiados';
 import { Header } from '../../components/Header';
 import { Pantalla } from '../../components/Pantalla';
 import { Sheet } from '../../components/Sheet';
@@ -18,6 +19,7 @@ import { useCajaActiva } from '../caja/useCajaActiva';
 import { CategoriaChips } from './CategoriaChips';
 import { ProductoGrid } from './ProductoGrid';
 import { TicketLista } from './TicketLista';
+import { FiarSheet } from './FiarSheet';
 import { useTicket } from './useTicket';
 import { posCopy } from './pos.copy';
 
@@ -43,6 +45,7 @@ export function PuntoDeVenta({
   const [expandido, setExpandido] = useState(false);
   const [cobrado, setCobrado] = useState(false);
   const [medio, setMedio] = useState<MedioPago>('efectivo');
+  const [fiarAbierto, setFiarAbierto] = useState(false);
   const [sheetAbrir, setSheetAbrir] = useState(false);
   const [catActiva, setCatActiva] = useState<string | null>(null);
   const [editando, setEditando] = useState<Producto | null>(null);
@@ -66,6 +69,18 @@ export function PuntoDeVenta({
   async function cobrar() {
     if (!hayItems || !caja) return;
     await registrarVenta(ticket.items, medio, caja.uuid);
+    finalizarVenta();
+  }
+
+  async function fiar(clienteUuid: string) {
+    if (!hayItems || !caja) return;
+    const ventaId = await registrarVenta(ticket.items, 'fiado', caja.uuid);
+    await registrarCargo({ clienteUuid, monto: ticket.total, ventaId });
+    setFiarAbierto(false);
+    finalizarVenta();
+  }
+
+  function finalizarVenta() {
     ticket.limpiar();
     setExpandido(false);
     setMedio('efectivo');
@@ -238,11 +253,27 @@ export function PuntoDeVenta({
                     {posCopy.cobrar}
                   </button>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setFiarAbierto(true)}
+                  className="flex items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-semibold text-cuadre-900/60 transition active:bg-cuadre-50"
+                >
+                  <span aria-hidden>📓</span> {posCopy.fiar}
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Fiar: elegir / crear cliente. */}
+      <FiarSheet
+        abierto={fiarAbierto}
+        total={ticket.total}
+        onCerrar={() => setFiarAbierto(false)}
+        onFiar={fiar}
+      />
 
       {/* Feedback al cobrar. */}
       {cobrado && (

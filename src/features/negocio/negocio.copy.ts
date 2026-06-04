@@ -75,6 +75,11 @@ export const negocioCopy = {
   insightSinCosto: (n: number) => `Te faltan costos en ${n} ${n === 1 ? 'producto' : 'productos'}: cargalos para ver tu ganancia real.`,
   insightTicket: (plata: string) => `Cada cliente te deja ${plata} en promedio.`,
 
+  // Fiados (acceso desde el panel)
+  fiadosTitulo: 'Fiados · en la calle',
+  fiadosDeudores: (n: number) => `${n} ${n === 1 ? 'cliente te debe' : 'clientes te deben'}`,
+  fiadosTodoCobrado: 'Nadie te debe nada',
+
   // Inventario / stock
   inventarioTitulo: 'Inventario',
   inventarioSub: 'La plata parada en mercadería',

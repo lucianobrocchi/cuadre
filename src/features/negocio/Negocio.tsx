@@ -4,6 +4,8 @@ import { listarProductos } from '../../db/productos';
 import { listarCategorias } from '../../db/categorias';
 import { ventasEntre } from '../../db/ventas';
 import { movimientosEntre } from '../../db/movimientos';
+import { listarClientes } from '../../db/clientes';
+import { listarCuentas } from '../../db/fiados';
 import { cajaActiva, resumenDeCaja, type ResumenCaja } from '../../db/cajas';
 import type { CajaSesion, Producto } from '../../db/types';
 import { Header } from '../../components/Header';
@@ -12,6 +14,9 @@ import { finDelDia, inicioDelDia } from '../../lib/fecha';
 import { formatPesos } from '../../lib/format';
 import { formatPct, resumenCatalogo } from '../../lib/rentabilidad';
 import { resumenInventario, type ResumenInventario } from '../../lib/stock';
+import { resumenFiados } from '../../lib/fiados';
+import { Fiados } from '../fiados/Fiados';
+import { IconoChevron } from '../../components/Iconos';
 import {
   comparar,
   indexarProductos,
@@ -61,6 +66,7 @@ function rangosDe(periodo: Periodo): Rangos {
 
 export function Negocio() {
   const [periodo, setPeriodo] = useState<Periodo>('hoy');
+  const [vista, setVista] = useState<'panel' | 'fiados'>('panel');
 
   const productos = useLiveQuery(() => listarProductos(), [], []);
   const categorias = useLiveQuery(() => listarCategorias(), [], []);
@@ -105,6 +111,10 @@ export function Negocio() {
   const catalogo = useMemo(() => resumenCatalogo(productos, categorias), [productos, categorias]);
   const inventario = useMemo(() => resumenInventario(productos), [productos]);
 
+  const clientes = useLiveQuery(() => listarClientes(), [], []);
+  const cuentas = useLiveQuery(() => listarCuentas(), [], []);
+  const fiados = useMemo(() => resumenFiados(clientes, cuentas), [clientes, cuentas]);
+
   const sinCosto = useMemo(
     () => productos.filter((p) => p.precio > 0 && p.costo == null).length,
     [productos],
@@ -113,12 +123,35 @@ export function Negocio() {
   const cmpVendido = comparar(actual.vendido, previo.vendido);
   const insights = construirInsights(actual, cmpVendido, intel, horas, sinCosto);
 
+  if (vista === 'fiados') return <Fiados onAtras={() => setVista('panel')} />;
+
   return (
     <>
       <Header titulo={t.headerTitulo} subtitulo={t.headerSubtitulo} />
       <Pantalla>
         {/* Caja en vivo */}
         <CajaAhora data={cajaViva} />
+
+        {/* Fiados / en la calle */}
+        <button
+          type="button"
+          onClick={() => setVista('fiados')}
+          className="card mt-3 flex w-full items-center gap-3 p-4 text-left transition active:scale-[0.99]"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cuadre-50 text-2xl" aria-hidden>
+            📓
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold text-cuadre-900">{t.fiadosTitulo}</span>
+            <span className="text-sm text-cuadre-900/50">
+              {fiados.deudores > 0 ? t.fiadosDeudores(fiados.deudores) : t.fiadosTodoCobrado}
+            </span>
+          </span>
+          <span className="num shrink-0 font-extrabold text-sobra">
+            {formatPesos(fiados.totalEnLaCalle)}
+          </span>
+          <IconoChevron width={20} height={20} className="shrink-0 text-cuadre-900/25" />
+        </button>
 
         {/* Período */}
         <div className="mb-3 mt-4 flex gap-2">

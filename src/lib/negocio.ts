@@ -71,8 +71,9 @@ export function resumenPlata(
 
   for (const v of ventas) {
     vendido += v.total;
-    if (v.medioPago === 'transferencia') transferencia += v.total;
-    else efectivo += v.total;
+    // El fiado no es cobro: suma a "vendido" pero no a efectivo ni transferencia.
+    if (v.medioPago === 'efectivo') efectivo += v.total;
+    else if (v.medioPago === 'transferencia') transferencia += v.total;
     unidades += unidadesDe(v);
     const g = gananciaDe(v, prodById);
     if (g.algunCosto) {

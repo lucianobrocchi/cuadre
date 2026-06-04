@@ -12,7 +12,7 @@ export interface Sincronizable {
   deleted?: boolean;
 }
 
-export type MedioPago = 'efectivo' | 'transferencia';
+export type MedioPago = 'efectivo' | 'transferencia' | 'fiado';
 
 export interface Producto {
   id?: number;
@@ -131,6 +131,31 @@ export interface Cierre {
   efectivoContado: number;
   diferencia: number;
   estado: EstadoCierre;
+}
+
+// ---- Fiados / cuenta corriente ----
+
+export interface Cliente extends Sincronizable {
+  id?: number;
+  nombre: string;
+  telefono?: string;
+}
+
+/** Movimiento de la cuenta corriente de un cliente. */
+export type TipoCuenta = 'cargo' | 'pago';
+
+export interface MovimientoCuenta extends Sincronizable {
+  id?: number;
+  clienteUuid: string;
+  /** `cargo` = se llevó fiado (debe más); `pago` = abonó (debe menos). */
+  tipo: TipoCuenta;
+  monto: number;
+  fecha: number;
+  /** Si el cargo nació de una venta del POS. */
+  ventaId?: number;
+  /** Con qué pagó (solo en `pago`). */
+  medioPago?: MedioPago;
+  nota?: string;
 }
 
 export interface Config {

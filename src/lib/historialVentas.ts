@@ -80,8 +80,9 @@ export function resumenSemana(ventas: Venta[], productos: Producto[]): ResumenSe
     dia.total += venta.total;
     dia.cantidad += 1;
     dia.unidades += unidadesVenta(venta);
-    if (venta.medioPago === 'transferencia') dia.transferencia += venta.total;
-    else dia.efectivo += venta.total;
+    // El fiado no es cobro: queda fuera de efectivo y transferencia.
+    if (venta.medioPago === 'efectivo') dia.efectivo += venta.total;
+    else if (venta.medioPago === 'transferencia') dia.transferencia += venta.total;
     const g = gananciaVenta(venta, prodById);
     if (g != null) dia.ganancia = (dia.ganancia ?? 0) + g;
   }

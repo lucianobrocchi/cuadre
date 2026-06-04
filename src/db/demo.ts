@@ -79,6 +79,51 @@ async function asegurarStock(productos: Producto[], r: () => number): Promise<vo
   });
 }
 
+/**
+ * Crea clientes de ejemplo con fiados, solo si todavía no hay ninguno (para no
+ * pisar clientes reales). Muestra la pestaña de fiados con saldos variados.
+ */
+async function asegurarFiadosDemo(r: () => number): Promise<void> {
+  if ((await db.clientes.count()) > 0) return;
+  const nombres = ['Doña Rosa', 'Juan del 3', 'Sra. Marta', 'El Flaco', 'Vecina Pao'];
+  const ahora = Date.now();
+
+  await db.transaction('rw', db.clientes, db.cuentas, async () => {
+    for (const nombre of nombres) {
+      const clienteUuid = nuevoUuid();
+      await db.clientes.add({ uuid: clienteUuid, nombre, updatedAt: ahora, dirty: true });
+
+      // 1–3 fiados recientes y, a veces, un pago parcial.
+      const nCargos = rint(r, 1, 3);
+      for (let i = 0; i < nCargos; i++) {
+        const fecha = ahora - rint(r, 0, 12) * MS_DIA - rint(r, 0, 10) * MS_HORA;
+        await db.cuentas.add({
+          uuid: nuevoUuid(),
+          clienteUuid,
+          tipo: 'cargo',
+          monto: redondear(rint(r, 1500, 9000)),
+          fecha,
+          updatedAt: fecha,
+          dirty: true,
+        });
+      }
+      if (r() < 0.5) {
+        const fecha = ahora - rint(r, 0, 5) * MS_DIA;
+        await db.cuentas.add({
+          uuid: nuevoUuid(),
+          clienteUuid,
+          tipo: 'pago',
+          monto: redondear(rint(r, 1000, 5000)),
+          fecha,
+          medioPago: 'efectivo',
+          updatedAt: fecha,
+          dirty: true,
+        });
+      }
+    }
+  });
+}
+
 export interface ResultadoDemo {
   dias: number;
   cajas: number;
@@ -94,6 +139,7 @@ export async function cargarDatosDemo(dias = 14): Promise<ResultadoDemo> {
   if (productos.length === 0) return { dias: 0, cajas: 0, ventas: 0 };
   await asegurarCostos(productos, r);
   await asegurarStock(productos, r);
+  await asegurarFiadosDemo(r);
 
   const egresoCats: CategoriaMovimiento[] = ['proveedor', 'gasto', 'retiro'];
   const cajasNuevas: CajaSesion[] = [];

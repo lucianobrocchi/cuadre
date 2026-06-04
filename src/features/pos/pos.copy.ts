@@ -11,6 +11,16 @@ export const posCopy = {
   cobrar: 'Cobrar',
   ventaGuardada: '¡Venta cobrada!',
   ajustes: 'Ajustes',
+  // Fiar (cuenta corriente)
+  fiar: 'Fiar',
+  fiarTitulo: '¿A quién le fiás?',
+  fiarSub: (total: string) => `Se anota ${total} en la cuenta del cliente.`,
+  fiarBuscar: 'Buscar o crear cliente',
+  fiarCrear: (nombre: string) => `Crear y fiar a "${nombre}"`,
+  fiarDebe: (monto: string) => `debe ${monto}`,
+  fiarAlDia: 'al día',
+  fiarSinClientes: 'Todavía no tenés clientes. Escribí un nombre para crear el primero.',
+  fiarConfirmada: '¡Fiado anotado!',
   // Editar precio en el momento (mantener presionado)
   editarPrecioTitulo: 'Editar precio',
   editarPrecioHint: 'Cambiá el precio y guardá. Queda actualizado en el catálogo.',

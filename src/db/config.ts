@@ -46,6 +46,8 @@ export async function reiniciarTodo(): Promise<void> {
       db.ventas,
       db.cajas,
       db.movimientos,
+      db.clientes,
+      db.cuentas,
       db.egresos,
       db.cierres,
       db.config,
@@ -56,6 +58,8 @@ export async function reiniciarTodo(): Promise<void> {
       await db.ventas.clear();
       await db.cajas.clear();
       await db.movimientos.clear();
+      await db.clientes.clear();
+      await db.cuentas.clear();
       await db.egresos.clear();
       await db.cierres.clear();
       await db.config.clear();
