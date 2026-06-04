@@ -60,8 +60,6 @@ versión simplificada (solo vendido vs. contado) para el "ajá" inicial.
 - **Historial**: dos vistas (control segmentado). **Ventas** (por defecto): las ventas de los **últimos 7 días** agrupadas por día — total de la semana (vendido, efectivo/transferencia, ganancia) y una tarjeta por día (total + ganancia); tocás un día y ves cada ticket (hora, medio de pago, ítems). **Cajas**: cajas cerradas con su descuadre y detalle (apertura/cierre, fondo, ventas, ingresos, salidas, esperado, contado).
 - **Ajustes**: nombre del kiosco, fondo inicial por defecto, ir a productos, **cargar datos de demo** (~14 días de ventas/cierres para ver la app llena), y empezar de cero (borra todo: productos, categorías, ventas, cajas y movimientos).
 
-> **Demo en el primer arranque:** la primera vez que se abre la app (DB vacía) se siembran solos catálogo + ~14 días de datos y se saltea el onboarding, para que se vea funcionando (`src/db/seedDemo.ts`, llamado desde `main.tsx`). Es de una sola vez (marca en `localStorage`) y **no pisa datos reales**; si hacés "empezar de cero" queda vacía y no se vuelve a sembrar.
-
 ## Modelo de datos (Dexie v3)
 
 Tablas sincronizables llevan `uuid · updatedAt · dirty · deleted` (listo para el sync de la Fase D, last-write-wins).
