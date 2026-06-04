@@ -1,18 +1,17 @@
 import {
   IconoCaja,
-  IconoGanancia,
   IconoHistorial,
   IconoProductos,
   IconoVender,
 } from './Iconos';
 
-export type Tab = 'vender' | 'caja' | 'productos' | 'ganancia' | 'historial';
+// La pestaña Ganancia está fuera por ahora (se reactiva sumándola acá y en App).
+export type Tab = 'vender' | 'caja' | 'productos' | 'historial';
 
 const TABS: { id: Tab; label: string; Icono: typeof IconoVender }[] = [
   { id: 'vender', label: 'Vender', Icono: IconoVender },
   { id: 'caja', label: 'Caja', Icono: IconoCaja },
   { id: 'productos', label: 'Productos', Icono: IconoProductos },
-  { id: 'ganancia', label: 'Ganancia', Icono: IconoGanancia },
   { id: 'historial', label: 'Historial', Icono: IconoHistorial },
 ];
 

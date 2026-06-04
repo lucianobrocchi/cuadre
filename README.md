@@ -15,7 +15,7 @@ Marca: **Verde Cuadre `#0F3D2E`**, tipografías **Cabinet Grotesk** (títulos, F
 |---|---|---|
 | **A — Núcleo de caja** | Sesión abrir/cerrar obligatoria, bloqueo de venta sin caja, estado siempre visible, movimientos (ingresos/egresos), cierre con descuadre, historial de cajas | ✅ Hecho y verificado |
 | **B — Productos** | Categorías + filtro en POS, editar precio al toque (long-press), importar Excel/CSV, lector de fotos con IA (mock), carga rápida desde catálogo precargado | ✅ Hecho y verificado |
-| **★ Rentabilidad** | Pestaña **Ganancia**: margen del catálogo (categoría→producto) + **ganancia real** por período (hoy / 7 días). Campo `costo` + snapshot del costo al vender. Editar costo al toque | ✅ Hecho y verificado |
+| **★ Rentabilidad** | Pestaña **Ganancia**: margen del catálogo (categoría→producto) + **ganancia real** por período (hoy / 7 días). Campo `costo` + snapshot del costo al vender. Editar costo al toque | ✅ Hecho · ⏸ **fuera del nav por ahora** |
 | **C — Panel de venta ágil** | Descuento %, redondeo, atajo F8, búsqueda + lector de barras, múltiples listas de precio | ⏳ Pendiente |
 | **D — Backend** | Supabase (auth + sync), permisos, **agente IA real** (fotos + facturas) | ⏳ Pendiente |
 
@@ -56,9 +56,11 @@ versión simplificada (solo vendido vs. contado) para el "ajá" inicial.
 - **Vender** (home): gate de caja (si no hay caja abierta, "Abrir caja"); con caja: barra de estado, chips de categoría, grid de productos (long-press = editar precio), ticket en vivo, medio de pago (efectivo/transferencia), Cobrar. Engranaje arriba = Ajustes.
 - **Caja**: abrir/cerrar sesión, estado (fondo / en caja), movimientos de efectivo, resumen del día.
 - **Productos**: lista **agrupada por categoría** (con el costo de cada uno). Un solo botón **Agregar productos** abre un hub con las 3 vías → **⚡ del catálogo** (con buscador y "agregar toda la categoría"), **📥 Excel o foto**, **✏️ uno a mano**. Editar/borrar; categorías que se crean al vuelo. El alta manual guarda **costo** y **categoría**.
-- **Ganancia** (dashboard): selector de período (hoy / últimos 7 días). Arriba, **ganancia real** del período (vendido, costo, ganancia, margen %); abajo, **margen del catálogo** por categoría → producto. Tocás un producto y le ponés el costo ahí mismo. Necesita que los productos tengan `costo` cargado.
+- **Ganancia** (dashboard): **fuera del nav por ahora** (`Dashboard.tsx` sigue en el repo). Selector de período (hoy / últimos 7 días). Arriba, **ganancia real** del período (vendido, costo, ganancia, margen %); abajo, **margen del catálogo** por categoría → producto. Tocás un producto y le ponés el costo ahí mismo. Para reactivarla: sumar `'ganancia'` al `Tab` y al nav (`BottomNav.tsx`) y volver a rutearla en `App.tsx`.
 - **Historial**: dos vistas (control segmentado). **Ventas** (por defecto): las ventas de los **últimos 7 días** agrupadas por día — total de la semana (vendido, efectivo/transferencia, ganancia) y una tarjeta por día (total + ganancia); tocás un día y ves cada ticket (hora, medio de pago, ítems). **Cajas**: cajas cerradas con su descuadre y detalle (apertura/cierre, fondo, ventas, ingresos, salidas, esperado, contado).
 - **Ajustes**: nombre del kiosco, fondo inicial por defecto, ir a productos, **cargar datos de demo** (~14 días de ventas/cierres para ver la app llena), y empezar de cero (borra todo: productos, categorías, ventas, cajas y movimientos).
+
+> **Demo en el primer arranque:** la primera vez que se abre la app (DB vacía) se siembran solos catálogo + ~14 días de datos y se saltea el onboarding, para que se vea funcionando (`src/db/seedDemo.ts`, llamado desde `main.tsx`). Es de una sola vez (marca en `localStorage`) y **no pisa datos reales**; si hacés "empezar de cero" queda vacía y no se vuelve a sembrar.
 
 ## Modelo de datos (Dexie v3)
 

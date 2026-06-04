@@ -54,7 +54,7 @@ export const onboardingCopy = {
       detalle: "Quizás cobraste algo que no anotaste. Igual, ahora ya lo sabés.",
     }),
     cierreFinalTitle: "Listo, hiciste tu primer cierre.",
-    cierreFinalSubtitle: "Así de fácil, todos los días. Y en la pestaña Ganancia vas a ver cuánto te deja cada cosa.",
+    cierreFinalSubtitle: "Así de fácil, todos los días. En Historial vas a ver cómo venís.",
     button: "Empezar a usar Cuadre",
   },
 };
