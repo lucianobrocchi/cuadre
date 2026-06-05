@@ -16,6 +16,8 @@ export function finDelDia(ts: number = Date.now()): number {
 
 const MS_DIA = 24 * 60 * 60 * 1000;
 
+export { MS_DIA };
+
 /** Rango [desde, hasta] que cubre los últimos `dias` días, incluyendo hoy. */
 export function rangoUltimosDias(dias: number): [number, number] {
   return [inicioDelDia(Date.now() - (dias - 1) * MS_DIA), finDelDia()];

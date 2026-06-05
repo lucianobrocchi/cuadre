@@ -166,3 +166,37 @@ export interface Config {
   fondoInicial: number;
   onboardingCompletado: boolean;
 }
+
+// ---- Proveedores y Pedidos ----
+
+export interface Proveedor extends Sincronizable {
+  id?: number;
+  nombre: string;
+  telefono?: string;
+  email?: string;
+  direccion?: string;
+  notas?: string;
+  /** Días habituales de entrega (ej: [1,3,5] = lunes, miércoles, viernes). */
+  diasEntrega?: number[];
+}
+
+export interface PedidoItem {
+  productoId: number;
+  nombre: string;
+  cantidadSolicitada: number;
+  cantidadRecibida?: number;
+  costoUnitario?: number;
+}
+
+export type EstadoPedido = 'pendiente' | 'parcial' | 'recibido' | 'cancelado';
+
+export interface Pedido extends Sincronizable {
+  id?: number;
+  proveedorUuid: string;
+  fecha: number;
+  items: PedidoItem[];
+  estado: EstadoPedido;
+  totalEstimado?: number;
+  notas?: string;
+  recibidoEn?: number;
+}

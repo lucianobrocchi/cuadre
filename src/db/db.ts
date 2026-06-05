@@ -10,6 +10,8 @@ import type {
   MovimientoCuenta,
   Producto,
   Venta,
+  Proveedor,
+  Pedido,
 } from './types';
 
 /**
@@ -28,6 +30,9 @@ export class CuadreDB extends Dexie {
   // Legacy (v1): se mantienen declaradas para no perder datos viejos.
   egresos!: Table<Egreso, number>;
   cierres!: Table<Cierre, number>;
+  // Proveedores y pedidos (v5)
+  proveedores!: Table<Proveedor, number>;
+  pedidos!: Table<Pedido, number>;
 
   constructor() {
     super('cuadre');
@@ -77,6 +82,22 @@ export class CuadreDB extends Dexie {
       config: '++id',
       egresos: '++id, fecha',
       cierres: '++id, fecha',
+    });
+
+    // v5: proveedores y pedidos de reposición.
+    this.version(5).stores({
+      productos: '++id, nombre, categoriaUuid, codigoBarras',
+      ventas: '++id, fecha, cajaUuid',
+      cajas: '++id, &uuid, estado, abiertaEn',
+      movimientos: '++id, &uuid, cajaUuid, fecha, tipo',
+      categorias: '++id, &uuid, orden',
+      clientes: '++id, &uuid, nombre',
+      cuentas: '++id, &uuid, clienteUuid, fecha, tipo',
+      config: '++id',
+      egresos: '++id, fecha',
+      cierres: '++id, fecha',
+      proveedores: '++id, &uuid, nombre',
+      pedidos: '++id, &uuid, proveedorUuid, estado, fecha',
     });
   }
 }

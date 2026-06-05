@@ -11,6 +11,8 @@ import { formatPesos } from '../../lib/format';
 import { etiquetaMedio } from '../../lib/medios';
 import { resumenDelDia } from './resumenDelDia';
 import { resumenCopy as t } from './resumen.copy';
+import { PanelAlertas, MetricaCard, BarraProyeccion } from '../../components/Alertas';
+import { useProyeccionesYAlertas } from '../../hooks/useProyeccionesYAlertas';
 
 interface Props {
   onAtras: () => void;
@@ -26,18 +28,34 @@ function resumenItems(venta: Venta): string {
 export function Resumen({ onAtras }: Props) {
   const resumen = useLiveQuery(() => resumenDelDia(), []);
   const [detalle, setDetalle] = useState<Venta | null>(null);
+  const { proyeccion, alertas, dismissAlerta, loading } = useProyeccionesYAlertas();
 
   return (
     <>
       <Header titulo={t.headerTitulo} subtitulo={formatFechaLarga()} onAtras={onAtras} />
 
       <Pantalla>
-        {/* Hero: vendido hoy */}
+        {/* Alertas inteligentes - LO PRIMERO QUE SE VE */}
+        {!loading && alertas.length > 0 && (
+          <PanelAlertas alertas={alertas} onDismiss={dismissAlerta} />
+        )}
+
+        {/* Hero: vendido hoy con proyección */}
         <div className="rounded-3xl bg-cuadre px-6 py-7 text-white shadow-card">
           <p className="font-medium text-white/70">{t.vendidoLabel}</p>
           <p className="num mt-1 text-5xl font-extrabold leading-none">
             {formatPesos(resumen?.totalVendido ?? 0)}
           </p>
+          
+          {/* Barra de proyección vs histórico */}
+          {proyeccion.historicoPromedio > 0 && (
+            <BarraProyeccion
+              actual={proyeccion.vendidoAcumulado}
+              proyectado={proyeccion.proyectadoTotal}
+              historico={proyeccion.historicoPromedio}
+            />
+          )}
+          
           {resumen && resumen.cantidadVentas === 0 && (
             <p className="mt-3 text-sm text-white/70">{t.sinVentas}</p>
           )}
@@ -55,21 +73,48 @@ export function Resumen({ onAtras }: Props) {
           )}
         </div>
 
-        {/* Métricas */}
+        {/* Métricas mejoradas con tendencias */}
         <div className="mt-3 grid grid-cols-2 gap-3">
-          <div className="card p-4">
-            <p className="text-sm font-medium text-cuadre-900/55">{t.ventasLabel}</p>
-            <p className="num mt-1 text-3xl font-extrabold text-cuadre-900">
-              {resumen?.cantidadVentas ?? 0}
-            </p>
-          </div>
-          <div className="card p-4">
-            <p className="text-sm font-medium text-cuadre-900/55">{t.egresosLabel}</p>
-            <p className="num mt-1 text-3xl font-extrabold text-cuadre-900">
-              {formatPesos(resumen?.totalEgresos ?? 0)}
-            </p>
-          </div>
+          <MetricaCard
+            titulo={t.ventasLabel}
+            valor={`${resumen?.cantidadVentas ?? 0}`}
+            tendencia={proyeccion.estado === 'mejor' ? 'subiendo' : proyeccion.estado === 'peor' ? 'bajando' : 'neutral'}
+            subtitulo={
+              proyeccion.desvioPct !== 0
+                ? `${proyeccion.desvioPct > 0 ? '+' : ''}${Math.round(proyeccion.desvioPct)}% vs promedio`
+                : undefined
+            }
+          />
+          <MetricaCard
+            titulo={t.egresosLabel}
+            valor={formatPesos(resumen?.totalEgresos ?? 0)}
+          />
         </div>
+        
+        {/* Proyección del día completo */}
+        {proyeccion.proyectadoTotal > 0 && proyeccion.horaActual >= 12 && (
+          <div className="card mt-3 p-4">
+            <p className="text-sm font-medium text-cuadre-900/55">Proyección diaria</p>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="num text-3xl font-extrabold text-cuadre-900">
+                {formatPesos(proyeccion.proyectadoTotal)}
+              </span>
+              {proyeccion.desvioPct > 10 && (
+                <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
+                  🚀 +{Math.round(proyeccion.desvioPct)}%
+                </span>
+              )}
+              {proyeccion.desvioPct < -10 && (
+                <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                  📉 {Math.round(proyeccion.desvioPct)}%
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-cuadre-900/45">
+              Basado en el ritmo actual y los últimos 14 días
+            </p>
+          </div>
+        )}
 
         {/* Lo más vendido */}
         <div className="card mt-3 flex items-center gap-4 p-4">

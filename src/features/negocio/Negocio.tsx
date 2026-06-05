@@ -7,9 +7,11 @@ import { movimientosEntre } from '../../db/movimientos';
 import { listarClientes } from '../../db/clientes';
 import { listarCuentas } from '../../db/fiados';
 import { cajaActiva, resumenDeCaja, type ResumenCaja } from '../../db/cajas';
-import type { CajaSesion, Producto } from '../../db/types';
+import { listarProveedores, pedidosPendientes } from '../../db/proveedores';
+import type { CajaSesion, Producto, MovimientoCuenta } from '../../db/types';
 import { Header } from '../../components/Header';
 import { Pantalla } from '../../components/Pantalla';
+import { PanelAlertas } from '../../components/Alertas';
 import { finDelDia, inicioDelDia } from '../../lib/fecha';
 import { formatPesos } from '../../lib/format';
 import { formatPct, resumenCatalogo } from '../../lib/rentabilidad';
@@ -29,6 +31,8 @@ import {
   type Comparativa,
   type ResumenPlata,
 } from '../../lib/negocio';
+import { calcularProyeccion, estimarProximaHora } from '../../lib/proyecciones';
+import { generarAlertas } from '../../lib/alertas';
 import { GraficoBarras } from './GraficoBarras';
 import { IntelProductos } from './IntelProductos';
 import { CatalogoMargenes } from './CatalogoMargenes';
@@ -66,10 +70,12 @@ function rangosDe(periodo: Periodo): Rangos {
 
 export function Negocio() {
   const [periodo, setPeriodo] = useState<Periodo>('hoy');
-  const [vista, setVista] = useState<'panel' | 'fiados'>('panel');
+  const [vista, setVista] = useState<'panel' | 'fiados' | 'proveedores'>('panel');
 
   const productos = useLiveQuery(() => listarProductos(), [], []);
   const categorias = useLiveQuery(() => listarCategorias(), [], []);
+  const proveedores = useLiveQuery(() => listarProveedores(), [], []);
+  const pedidosPends = useLiveQuery(() => pedidosPendientes(), [], []);
 
   // Ventana amplia (60 días) para cubrir 30d + su período previo y la serie.
   const ventana = useMemo(() => inicioDelDia(Date.now() - 59 * MS_DIA), []);
@@ -85,6 +91,14 @@ export function Negocio() {
 
   const prodById = useMemo(() => indexarProductos(productos), [productos]);
   const rangos = useMemo(() => rangosDe(periodo), [periodo]);
+
+  // Proyección del día actual
+  const ventasHoy = useMemo(() => ventasEnRango(ventas, inicioDelDia(), finDelDia()), [ventas]);
+  const ventasHistoricas = useMemo(() => ventasEnRango(ventas, ventana, inicioDelDia() - 1), [ventas, ventana]);
+  const proyeccion = useMemo(() => calcularProyeccion(ventasHoy, ventasHistoricas), [ventasHoy, ventasHistoricas]);
+  
+  // Estimación próxima hora
+  const proximaHoraEstimada = useMemo(() => estimarProximaHora(ventasHistoricas), [ventasHistoricas]);
 
   const actual = useMemo(
     () =>
@@ -115,22 +129,44 @@ export function Negocio() {
   const cuentas = useLiveQuery(() => listarCuentas(), [], []);
   const fiados = useMemo(() => resumenFiados(clientes, cuentas), [clientes, cuentas]);
 
+  // Fiados vencidos (más de 7 días sin pago)
+  const fiadosVencidos = useMemo(() => {
+    const hace7Dias = Date.now() - 7 * MS_DIA;
+    return (cuentas || []).filter((m: MovimientoCuenta) => m.fecha < hace7Dias && m.tipo === 'cargo');
+  }, [cuentas]);
+
   const sinCosto = useMemo(
     () => productos.filter((p) => p.precio > 0 && p.costo == null).length,
     [productos],
   );
 
   const cmpVendido = comparar(actual.vendido, previo.vendido);
+  
+  // Generar alertas inteligentes
+  const alertas = useMemo(() => 
+    generarAlertas(productos, ventasHoy, ventasHistoricas, fiadosVencidos, proyeccion),
+    [productos, ventasHoy, ventasHistoricas, fiadosVencidos, proyeccion]
+  );
+
   const insights = construirInsights(actual, cmpVendido, intel, horas, sinCosto);
 
   if (vista === 'fiados') return <Fiados onAtras={() => setVista('panel')} />;
+  if (vista === 'proveedores') return <PanelProveedores onAtras={() => setVista('panel')} proveedores={proveedores} pedidos={pedidosPends} productos={productos} />;
 
   return (
     <>
       <Header titulo={t.headerTitulo} subtitulo={t.headerSubtitulo} />
       <Pantalla>
+        {/* Alertas inteligentes - LO PRIMERO QUE SE VE */}
+        {alertas.length > 0 && <PanelAlertas alertas={alertas} />}
+
         {/* Caja en vivo */}
         <CajaAhora data={cajaViva} />
+
+        {/* Proyección del día con barra visual */}
+        {proyeccion.horaActual >= 10 && proyeccion.historicoPromedio > 0 && (
+          <ProyeccionDiaCard proyeccion={proyeccion} estimacionProximaHora={proximaHoraEstimada} />
+        )}
 
         {/* Fiados / en la calle */}
         <button
@@ -149,6 +185,26 @@ export function Negocio() {
           </span>
           <span className="num shrink-0 font-extrabold text-sobra">
             {formatPesos(fiados.totalEnLaCalle)}
+          </span>
+          <IconoChevron width={20} height={20} className="shrink-0 text-cuadre-900/25" />
+        </button>
+
+        {/* Proveedores y pedidos pendientes */}
+        <button
+          type="button"
+          onClick={() => setVista('proveedores')}
+          className="card mt-3 flex w-full items-center gap-3 p-4 text-left transition active:scale-[0.99]"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cuadre-50 text-2xl" aria-hidden>
+            🚚
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold text-cuadre-900">Proveedores</span>
+            <span className="text-sm text-cuadre-900/50">
+              {pedidosPends?.length ?? 0 > 0 
+                ? `${pedidosPends?.length} pedido(s) pendiente(s)` 
+                : 'Sin pedidos pendientes'}
+            </span>
           </span>
           <IconoChevron width={20} height={20} className="shrink-0 text-cuadre-900/25" />
         </button>

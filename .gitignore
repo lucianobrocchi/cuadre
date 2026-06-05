@@ -1,30 +1,40 @@
-# Dependencias
-node_modules
-.pnp
-.pnp.js
+```
+# Dependencies
+node_modules/
 
-# Build
-dist
-dist-ssr
-*.local
-*.zip
+# Build artifacts
+dist/
+build/
+target/
 
-# PWA generado
-dev-dist
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
+.env
+.env.local
+.env.*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
 
 # Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+*.log
 
-# Editor
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Distribution / packaging
+*.tar.gz
+*.whl
+*.egg-info/
+```
