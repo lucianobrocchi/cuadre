@@ -99,6 +99,15 @@ export function IconoMas(props: IconProps) {
   );
 }
 
+export function IconoBuscar(props: IconProps) {
+  return (
+    <svg {...svgBase} {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.3-4.3" />
+    </svg>
+  );
+}
+
 export function IconoMenos(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>

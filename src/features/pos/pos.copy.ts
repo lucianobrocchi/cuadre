@@ -26,4 +26,6 @@ export const posCopy = {
   editarPrecioHint: 'Cambiá el precio y guardá. Queda actualizado en el catálogo.',
   guardarPrecio: 'Guardar precio',
   sinProductosCategoria: 'No hay productos en esta categoría.',
+  buscarPlaceholder: 'Buscar o escanear código',
+  sinResultados: 'No encontramos nada con eso.',
 };

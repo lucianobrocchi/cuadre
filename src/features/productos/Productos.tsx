@@ -27,6 +27,7 @@ interface DatosProducto {
   categoriaUuid?: string;
   stock?: number;
   stockMin?: number;
+  codigoBarras?: string;
 }
 
 export function Productos() {

@@ -9,8 +9,8 @@ import { Header } from '../../components/Header';
 import { Pantalla } from '../../components/Pantalla';
 import { Sheet } from '../../components/Sheet';
 import { InputPlata } from '../../components/InputPlata';
-import { IconoAjustes, IconoCheck, IconoChevron } from '../../components/Iconos';
-import { formatPesos } from '../../lib/format';
+import { IconoAjustes, IconoBuscar, IconoCheck, IconoChevron } from '../../components/Iconos';
+import { formatPesos, normalizar } from '../../lib/format';
 import { medios } from '../../lib/medios';
 import { AbrirCajaSheet } from '../caja/AbrirCaja';
 import { BarraEstadoCaja } from '../caja/BarraEstadoCaja';
@@ -31,6 +31,14 @@ interface Props {
   onAbrirAjustes: () => void;
 }
 
+/** Coincide por nombre (sin acentos) o por código de barras. */
+function coincideBusqueda(p: Producto, q: string): boolean {
+  const norm = normalizar(q.trim());
+  if (!norm) return true;
+  if (normalizar(p.nombre).includes(norm)) return true;
+  return p.codigoBarras != null && p.codigoBarras.includes(q.trim());
+}
+
 export function PuntoDeVenta({
   nombreKiosco,
   fondoInicial,
@@ -48,13 +56,30 @@ export function PuntoDeVenta({
   const [fiarAbierto, setFiarAbierto] = useState(false);
   const [sheetAbrir, setSheetAbrir] = useState(false);
   const [catActiva, setCatActiva] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState('');
   const [editando, setEditando] = useState<Producto | null>(null);
   const [nuevoPrecio, setNuevoPrecio] = useState(0);
 
   const enTicket = new Map(ticket.items.map((it) => [it.productoId, it.cantidad]));
   const hayItems = ticket.items.length > 0;
-  const productosFiltrados =
-    catActiva === null ? productos : productos.filter((p) => p.categoriaUuid === catActiva);
+  const buscando = busqueda.trim().length > 0;
+  const productosFiltrados = buscando
+    ? productos.filter((p) => coincideBusqueda(p, busqueda))
+    : catActiva === null
+      ? productos
+      : productos.filter((p) => p.categoriaUuid === catActiva);
+
+  /** Enter en el buscador = lector de barras: agrega el match exacto o el único resultado. */
+  function buscarEnter() {
+    const q = busqueda.trim();
+    if (!q) return;
+    const exacto = productos.find((p) => p.codigoBarras && p.codigoBarras === q);
+    const match = exacto ?? (productosFiltrados.length === 1 ? productosFiltrados[0] : null);
+    if (match) {
+      ticket.agregar(match);
+      setBusqueda('');
+    }
+  }
 
   function abrirEditarPrecio(p: Producto) {
     setEditando(p);
@@ -155,11 +180,41 @@ export function PuntoDeVenta({
           </div>
         ) : (
           <>
-            <CategoriaChips categorias={categorias} activa={catActiva} onCambiar={setCatActiva} />
+            {/* Buscador + lector de barras */}
+            <div className="relative mb-3">
+              <IconoBuscar
+                width={20}
+                height={20}
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-cuadre-900/35"
+              />
+              <input
+                type="text"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && buscarEnter()}
+                placeholder={posCopy.buscarPlaceholder}
+                autoComplete="off"
+                className="w-full rounded-2xl border-2 border-cuadre/12 bg-white py-3 pl-11 pr-10 font-semibold text-cuadre-900 outline-none focus:border-cuadre"
+              />
+              {buscando && (
+                <button
+                  type="button"
+                  onClick={() => setBusqueda('')}
+                  aria-label="Limpiar búsqueda"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-cuadre-900/40 active:bg-cuadre-50"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {!buscando && (
+              <CategoriaChips categorias={categorias} activa={catActiva} onCambiar={setCatActiva} />
+            )}
             <div className={hayItems ? 'pb-44' : ''}>
               {productosFiltrados.length === 0 ? (
                 <p className="mt-10 text-center text-cuadre-900/45">
-                  {posCopy.sinProductosCategoria}
+                  {buscando ? posCopy.sinResultados : posCopy.sinProductosCategoria}
                 </p>
               ) : (
                 <ProductoGrid

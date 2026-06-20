@@ -15,6 +15,7 @@ interface DatosProducto {
   categoriaUuid?: string;
   stock?: number;
   stockMin?: number;
+  codigoBarras?: string;
 }
 
 interface Props {
@@ -35,6 +36,7 @@ export function ProductoForm({ inicial, onGuardar, onBorrar }: Props) {
   const [llevaStock, setLlevaStock] = useState(inicial?.stock != null);
   const [stock, setStock] = useState(inicial?.stock ?? 0);
   const [stockMin, setStockMin] = useState(inicial?.stockMin ?? 0);
+  const [codigoBarras, setCodigoBarras] = useState(inicial?.codigoBarras ?? '');
 
   const valido = nombre.trim().length > 0 && precio > 0;
 
@@ -170,6 +172,24 @@ export function ProductoForm({ inicial, onGuardar, onBorrar }: Props) {
         )}
       </div>
 
+      {/* Código de barras */}
+      <div>
+        <label htmlFor="prod-codigo" className="mb-2 block font-semibold text-cuadre-900">
+          {t.codigoLabel}{' '}
+          <span className="font-normal text-cuadre-900/40">· {t.codigoOpcional}</span>
+        </label>
+        <input
+          id="prod-codigo"
+          type="text"
+          inputMode="numeric"
+          value={codigoBarras}
+          onChange={(e) => setCodigoBarras(e.target.value)}
+          placeholder={t.codigoPlaceholder}
+          autoComplete="off"
+          className="num input-grande text-lg"
+        />
+      </div>
+
       {/* Emoji */}
       <div>
         <span className="mb-2 block font-semibold text-cuadre-900">{t.emojiLabel}</span>
@@ -203,6 +223,7 @@ export function ProductoForm({ inicial, onGuardar, onBorrar }: Props) {
             categoriaUuid,
             stock: llevaStock ? Math.max(0, Math.round(stock)) : undefined,
             stockMin: llevaStock && stockMin > 0 ? Math.round(stockMin) : undefined,
+            codigoBarras: codigoBarras.trim() || undefined,
           })
         }
         className="btn-primario mt-1"
