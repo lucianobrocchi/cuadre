@@ -32,4 +32,6 @@ export const posCopy = {
   sinProductosCategoria: 'No hay productos en esta categoría.',
   buscarPlaceholder: 'Buscar o escanear código',
   sinResultados: 'No encontramos nada con eso.',
+  listaMinorista: 'Minorista',
+  listaMayorista: 'Mayorista',
 };

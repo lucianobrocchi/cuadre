@@ -12,6 +12,7 @@ import { InputPlata } from '../../components/InputPlata';
 import { IconoAjustes, IconoBuscar, IconoCheck, IconoChevron } from '../../components/Iconos';
 import { formatPesos, normalizar } from '../../lib/format';
 import { medios } from '../../lib/medios';
+import { precioSegunLista, type ListaPrecio } from '../../lib/listaPrecio';
 import { AbrirCajaSheet } from '../caja/AbrirCaja';
 import { BarraEstadoCaja } from '../caja/BarraEstadoCaja';
 import { SinCaja } from '../caja/SinCaja';
@@ -57,8 +58,22 @@ export function PuntoDeVenta({
   const [sheetAbrir, setSheetAbrir] = useState(false);
   const [catActiva, setCatActiva] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState('');
+  const [lista, setLista] = useState<ListaPrecio>('minorista');
   const [editando, setEditando] = useState<Producto | null>(null);
   const [nuevoPrecio, setNuevoPrecio] = useState(0);
+
+  const precioDe = (p: Producto) => precioSegunLista(p, lista);
+  const agregarConLista = (p: Producto) => ticket.agregar(p, precioDe(p));
+
+  /** Cambia la lista de precios y recalcula los renglones ya cargados. */
+  function cambiarLista(nueva: ListaPrecio) {
+    setLista(nueva);
+    const porId = new Map(productos.map((p) => [p.id, p]));
+    ticket.aplicarPrecios((id) => {
+      const p = porId.get(id);
+      return p ? precioSegunLista(p, nueva) : 0;
+    });
+  }
 
   const enTicket = new Map(ticket.items.map((it) => [it.productoId, it.cantidad]));
   const hayItems = ticket.items.length > 0;
@@ -76,7 +91,7 @@ export function PuntoDeVenta({
     const exacto = productos.find((p) => p.codigoBarras && p.codigoBarras === q);
     const match = exacto ?? (productosFiltrados.length === 1 ? productosFiltrados[0] : null);
     if (match) {
-      ticket.agregar(match);
+      agregarConLista(match);
       setBusqueda('');
     }
   }
@@ -193,6 +208,24 @@ export function PuntoDeVenta({
           </div>
         ) : (
           <>
+            {/* Lista de precios (aparece cuando hay precios mayoristas cargados) */}
+            {productos.some((p) => p.precioMayor != null) && (
+              <div className="mb-3 flex rounded-2xl bg-cuadre-50 p-1">
+                {(['minorista', 'mayorista'] as const).map((l) => (
+                  <button
+                    key={l}
+                    type="button"
+                    onClick={() => cambiarLista(l)}
+                    className={`flex-1 rounded-xl py-1.5 text-sm font-bold transition ${
+                      lista === l ? 'bg-white text-cuadre shadow-card' : 'text-cuadre-900/50'
+                    }`}
+                  >
+                    {l === 'minorista' ? posCopy.listaMinorista : posCopy.listaMayorista}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Buscador + lector de barras */}
             <div className="relative mb-3">
               <IconoBuscar
@@ -232,9 +265,10 @@ export function PuntoDeVenta({
               ) : (
                 <ProductoGrid
                   productos={productosFiltrados}
-                  onAgregar={ticket.agregar}
+                  onAgregar={agregarConLista}
                   enTicket={enTicket}
                   onEditarPrecio={abrirEditarPrecio}
+                  precioDe={precioDe}
                 />
               )}
             </div>

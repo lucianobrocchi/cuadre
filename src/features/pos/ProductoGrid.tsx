@@ -10,10 +10,12 @@ interface Props {
   enTicket?: Map<number, number>;
   /** Si se pasa, mantener presionada la card abre la edición de precio. */
   onEditarPrecio?: (p: Producto) => void;
+  /** Precio a mostrar según la lista activa (default: el precio base). */
+  precioDe?: (p: Producto) => number;
 }
 
 /** Grilla de productos: un toque agrega al ticket; mantener presionado edita el precio. */
-export function ProductoGrid({ productos, onAgregar, enTicket, onEditarPrecio }: Props) {
+export function ProductoGrid({ productos, onAgregar, enTicket, onEditarPrecio, precioDe }: Props) {
   const timer = useRef<number | null>(null);
   const fueLargo = useRef(false);
 
@@ -69,7 +71,7 @@ export function ProductoGrid({ productos, onAgregar, enTicket, onEditarPrecio }:
               {p.nombre}
             </span>
             <span className="num text-sm font-medium text-cuadre-900/60">
-              {formatPesos(p.precio)}
+              {formatPesos(precioDe ? precioDe(p) : p.precio)}
             </span>
             <StockChip p={p} />
           </button>

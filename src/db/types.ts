@@ -20,6 +20,8 @@ export interface Producto {
   precio: number;
   /** Precio de compra. Opcional: habilita el cálculo de margen y ganancia. */
   costo?: number;
+  /** Precio mayorista. Opcional: si falta, la lista mayorista usa `precio`. */
+  precioMayor?: number;
   emoji?: string;
   /** Categoría a la que pertenece (uuid estable). */
   categoriaUuid?: string;

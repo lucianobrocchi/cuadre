@@ -23,6 +23,7 @@ interface DatosProducto {
   nombre: string;
   precio: number;
   costo?: number;
+  precioMayor?: number;
   emoji?: string;
   categoriaUuid?: string;
   stock?: number;

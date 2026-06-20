@@ -124,6 +124,18 @@ async function asegurarFiadosDemo(r: () => number): Promise<void> {
   });
 }
 
+/** Le pone un precio mayorista (~85% del minorista) a los que no tengan. */
+async function asegurarMayorista(productos: Producto[], r: () => number): Promise<void> {
+  const sinMayor = productos.filter((p) => p.precioMayor == null && p.precio > 0 && p.id != null);
+  await db.transaction('rw', db.productos, async () => {
+    for (const p of sinMayor) {
+      const precioMayor = Math.max(p.precio - 50, redondear(p.precio * (0.82 + r() * 0.06)));
+      await db.productos.update(p.id!, { precioMayor });
+      p.precioMayor = precioMayor;
+    }
+  });
+}
+
 export interface ResultadoDemo {
   dias: number;
   cajas: number;
@@ -139,6 +151,7 @@ export async function cargarDatosDemo(dias = 14): Promise<ResultadoDemo> {
   if (productos.length === 0) return { dias: 0, cajas: 0, ventas: 0 };
   await asegurarCostos(productos, r);
   await asegurarStock(productos, r);
+  await asegurarMayorista(productos, r);
   await asegurarFiadosDemo(r);
 
   const egresoCats: CategoriaMovimiento[] = ['proveedor', 'gasto', 'retiro'];

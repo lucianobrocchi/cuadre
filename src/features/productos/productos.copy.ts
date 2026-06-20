@@ -13,6 +13,9 @@ export const productosCopy = {
   costoOpcional: 'opcional',
   gananciaHint: (ganancia: string, pct: number) => `Ganás ${ganancia} · ${pct}% del precio`,
   costoMayorPrecio: 'Ojo: el costo es mayor que el precio',
+  mayorLabel: 'Precio mayorista',
+  mayorOpcional: 'opcional',
+  mayorHint: 'Se usa cuando vendés en modo Mayorista en el POS.',
   // Stock
   stockToggle: 'Llevar stock',
   stockToggleSub: 'Descontar al vender y avisarte cuando se esté por acabar',

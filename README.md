@@ -16,7 +16,7 @@ Marca: **Verde Cuadre `#0F3D2E`**, tipografías **Cabinet Grotesk** (títulos, F
 | **A — Núcleo de caja** | Sesión abrir/cerrar obligatoria, bloqueo de venta sin caja, estado siempre visible, movimientos (ingresos/egresos), cierre con descuadre, historial de cajas | ✅ Hecho y verificado |
 | **B — Productos** | Categorías + filtro en POS, editar precio al toque (long-press), importar Excel/CSV, lector de fotos con IA (mock), carga rápida desde catálogo precargado | ✅ Hecho y verificado |
 | **★ Negocio** (centro de control) | Pestaña **Negocio**: **caja en vivo** (efectivo ahora), panel de plata por período (hoy / 7 / 30 días) con **comparativa** vs período anterior, **flujo** (ingresos/egresos/neto), **tendencia 30 días** + **mejores horas** (gráficos SVG), **inteligencia de productos** (más vendidos / más rentables / alertas: pierden plata · sin movimiento), **insights** automáticos y **margen del catálogo** (ex Ganancia, con editar costo). | ✅ Hecho |
-| **C — Panel de venta ágil** | Descuento %, redondeo, atajo F8, búsqueda + lector de barras, múltiples listas de precio | ⏳ Pendiente |
+| **C — Panel de venta ágil** | Búsqueda + **lector de barras** en el POS, **descuento %**, **redondeo**, atajo **F8** para cobrar, **listas de precio** (Minorista/Mayorista) | ✅ Hecho |
 | **D — Backend** | Supabase (auth + sync), permisos, **agente IA real** (fotos + facturas) | ⏳ Pendiente |
 
 Build limpio (`npm run build` pasa el typecheck estricto). Verificado de punta a punta en el navegador.
@@ -65,7 +65,7 @@ versión simplificada (solo vendido vs. contado) para el "ajá" inicial.
 
 Tablas sincronizables llevan `uuid · updatedAt · dirty · deleted` (listo para el sync de la Fase D, last-write-wins).
 
-- **productos**: `id, nombre, precio, costo?, emoji?, categoriaUuid?, codigoBarras?, stock?, stockMin?` — `stock` es **opt-in**: si está, se descuenta al vender (y se devuelve al anular) y dispara alertas de bajo/sin stock; `stockMin` es el umbral de aviso (default `STOCK_MIN_DEFAULT = 3`). Campos no indexados.
+- **productos**: `id, nombre, precio, costo?, precioMayor?, emoji?, categoriaUuid?, codigoBarras?, stock?, stockMin?` — `precioMayor` es la lista mayorista (fallback al `precio`); `stock` es **opt-in**: si está, se descuenta al vender (y se devuelve al anular) y dispara alertas de bajo/sin stock; `stockMin` es el umbral de aviso (default `STOCK_MIN_DEFAULT = 3`). Campos no indexados.
 - **categorias**: `id, uuid, nombre, orden, emoji?`
 - **ventas**: `id, fecha, items[{ productoId, nombre, precio, costo?, cantidad }], total, medioPago (efectivo|transferencia|fiado), cajaUuid` — el `costo` se copia al vender (snapshot) para que la ganancia histórica no cambie si después tocás el costo.
 - **cajas** (sesiones): `id, uuid, estado, montoInicial, abiertaEn, cerradaEn?, ventasEfectivo, ventasTransferencia, ingresosEfectivo, egresosEfectivo, esperadoEfectivo, contadoEfectivo, diferencia, estadoCuadre`
@@ -111,7 +111,7 @@ src/
    - **Pro**: este dashboard, lindo y simple. **Full**: ejecutivo avanzado (tendencias, comparativas por semana/mes).
 2. ✅ **Historial de ventas de la semana** *(hecho)* — pestaña **Historial** → vista **Ventas**: los últimos 7 días agrupados por día, con total de la semana y el detalle de cada ticket. Lógica pura en `src/lib/historialVentas.ts`.
 3. ✅ **Onboarding rework** *(hecho)* — flujo: nombre → elegir del catálogo **por categorías** con **costo opcional** → venta de práctica → primer cierre → cierra invitando a la pestaña **Ganancia**. Persiste categoría + costo al terminar (`src/features/onboarding/`, catálogo curado en `catalogoInicial.ts`).
-4. **Fase C — panel de venta ágil**: descuento %, redondeo auto/manual, atajo **F8** para cobrar, búsqueda + **lector de barras** (el campo `codigoBarras` ya existe), **múltiples listas de precio** (Minorista/Mayorista).
+4. ✅ **Fase C — panel de venta ágil** *(hecho)* — **búsqueda + lector de barras** en el POS (Enter agrega el match exacto por código o el único resultado), **descuento %** (chips 0/5/10/15) y **redondeo** al múltiplo de 50, atajo **F8** para cobrar, y **listas de precio** Minorista/Mayorista (campo `precioMayor`, toggle que aparece cuando hay precios mayoristas cargados). El descuento/redondeo se reparte en los renglones al guardar (`useTicket.itemsParaCobrar`) para que venta y ganancia queden exactas.
 5. **Fase D — backend**: Supabase (auth + sync last-write-wins), **permisos granulares**, y el **agente IA real** (fotos de cuaderno + lectura de facturas con la Claude API).
 6. **Integraciones**: AFIP (factura electrónica), ticketera térmica, pago a proveedor desde el POS, etiquetas para góndola. ✅ **Control de fiados** *(hecho)* — clientes con cuenta corriente: fiar desde el POS (botón **Fiar** → elegir/crear cliente), registrar pagos (el pago en efectivo entra a la caja), historial por cliente y total **en la calle** en Negocio. Lógica pura en `src/lib/fiados.ts`.
 
@@ -120,7 +120,7 @@ src/
 - Todo el código está en el repo (`main`). Build verificado.
 - **Hecho en esta tanda:** dashboard de rentabilidad (`src/lib/rentabilidad.ts` + `src/features/dashboard/`), costo en toda la carga, **datos de demo** (`src/db/demo.ts`, botón en Ajustes), **productos agrupados por categoría**, **carga 2.0** (hub + buscador + "agregar toda la categoría") y **onboarding 2.0** (con categorías y costos).
 - **Para ver la app llena:** Ajustes → "Cargar datos de demo" (~14 días de cajas/ventas/movimientos). No es destructivo; se saca con "empezar de cero".
-- Próximo paso natural: **Fase C — panel de venta ágil** (roadmap #4): descuento %, redondeo, atajo F8, búsqueda + lector de barras, listas de precio.
+- Próximo paso natural: **Fase D — backend** (roadmap #5): Supabase (auth + sync last-write-wins), permisos, y el agente IA real (fotos + facturas).
 - **Historial de ventas de la semana** ya está hecho (`src/lib/historialVentas.ts` + `src/features/historial/VentasSemana.tsx`; la pestaña Historial ahora tiene las vistas **Ventas** y **Cajas**).
 - El catálogo precargado se edita en `src/data/catalogoPrecargado.ts`; el del onboarding en `src/data/catalogoInicial.ts` (`catalogoOnboarding`).
 - Convención: textos de UI siempre en archivos `*.copy.ts` por feature; español rioplatense informal (vos, tocá, cargá, la plata).

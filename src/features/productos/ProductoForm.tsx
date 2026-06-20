@@ -11,6 +11,7 @@ interface DatosProducto {
   nombre: string;
   precio: number;
   costo?: number;
+  precioMayor?: number;
   emoji?: string;
   categoriaUuid?: string;
   stock?: number;
@@ -29,6 +30,7 @@ export function ProductoForm({ inicial, onGuardar, onBorrar }: Props) {
   const [nombre, setNombre] = useState(inicial?.nombre ?? '');
   const [precio, setPrecio] = useState(inicial?.precio ?? 0);
   const [costo, setCosto] = useState(inicial?.costo ?? 0);
+  const [precioMayor, setPrecioMayor] = useState(inicial?.precioMayor ?? 0);
   const [emoji, setEmoji] = useState<string | undefined>(inicial?.emoji);
   const [categoriaUuid, setCategoriaUuid] = useState<string | undefined>(inicial?.categoriaUuid);
   const [creandoCat, setCreandoCat] = useState(false);
@@ -88,6 +90,16 @@ export function ProductoForm({ inicial, onGuardar, onBorrar }: Props) {
           ) : (
             <p className="mt-1.5 text-sm font-semibold text-falta">{t.costoMayorPrecio}</p>
           ))}
+      </div>
+
+      {/* Precio mayorista */}
+      <div>
+        <label htmlFor="prod-mayor" className="mb-2 block font-semibold text-cuadre-900">
+          {t.mayorLabel}{' '}
+          <span className="font-normal text-cuadre-900/40">· {t.mayorOpcional}</span>
+        </label>
+        <InputPlata id="prod-mayor" valor={precioMayor} onCambiar={setPrecioMayor} placeholder="0" />
+        <p className="mt-1 text-xs text-cuadre-900/40">{t.mayorHint}</p>
       </div>
 
       {/* Stock */}
@@ -219,6 +231,7 @@ export function ProductoForm({ inicial, onGuardar, onBorrar }: Props) {
             nombre: nombre.trim(),
             precio,
             costo: costo > 0 ? costo : undefined,
+            precioMayor: precioMayor > 0 ? precioMayor : undefined,
             emoji,
             categoriaUuid,
             stock: llevaStock ? Math.max(0, Math.round(stock)) : undefined,
