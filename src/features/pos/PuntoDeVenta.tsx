@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { MedioPago, Producto } from '../../db/types';
 import { editarPrecio, listarProductos } from '../../db/productos';
@@ -93,13 +93,13 @@ export function PuntoDeVenta({
 
   async function cobrar() {
     if (!hayItems || !caja) return;
-    await registrarVenta(ticket.items, medio, caja.uuid);
+    await registrarVenta(ticket.itemsParaCobrar(), medio, caja.uuid);
     finalizarVenta();
   }
 
   async function fiar(clienteUuid: string) {
     if (!hayItems || !caja) return;
-    const ventaId = await registrarVenta(ticket.items, 'fiado', caja.uuid);
+    const ventaId = await registrarVenta(ticket.itemsParaCobrar(), 'fiado', caja.uuid);
     await registrarCargo({ clienteUuid, monto: ticket.total, ventaId });
     setFiarAbierto(false);
     finalizarVenta();
@@ -112,6 +112,19 @@ export function PuntoDeVenta({
     setCobrado(true);
     window.setTimeout(() => setCobrado(false), 1300);
   }
+
+  // Atajo de teclado: F8 cobra (útil con teclado/lector en mostrador).
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'F8') {
+        e.preventDefault();
+        cobrar();
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hayItems, caja, medio, ticket.total]);
 
   const header = (
     <Header
@@ -252,6 +265,51 @@ export function PuntoDeVenta({
                   <div className="max-h-[32vh] overflow-y-auto">
                     <TicketLista items={ticket.items} onCambiarCantidad={ticket.cambiarCantidad} />
                   </div>
+
+                  {/* Descuento y redondeo */}
+                  <div className="mt-1 flex flex-col gap-2 border-t border-cuadre/10 py-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-cuadre-900/55">
+                        {posCopy.descuento}
+                      </span>
+                      <div className="flex gap-1">
+                        {[0, 5, 10, 15].map((d) => (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => ticket.setDescuentoPct(d)}
+                            className={`num min-w-9 rounded-lg px-2 py-1 text-sm font-bold transition ${
+                              ticket.descuentoPct === d
+                                ? 'bg-cuadre text-white'
+                                : 'bg-cuadre-50 text-cuadre-900/65'
+                            }`}
+                          >
+                            {d === 0 ? posCopy.sinDescuento : `${d}%`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => ticket.setRedondear(!ticket.redondear)}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="text-sm font-semibold text-cuadre-900/55">
+                        {posCopy.redondear}
+                      </span>
+                      <span
+                        className={`flex h-6 w-11 items-center rounded-full p-0.5 transition ${
+                          ticket.redondear ? 'bg-cuadre' : 'bg-cuadre-900/15'
+                        }`}
+                      >
+                        <span
+                          className={`h-5 w-5 rounded-full bg-white shadow transition ${
+                            ticket.redondear ? 'translate-x-5' : ''
+                          }`}
+                        />
+                      </span>
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -293,10 +351,19 @@ export function PuntoDeVenta({
                     />
                     <span>
                       <span className="block text-xs font-medium text-cuadre-900/55">
-                        {posCopy.productosLabel(ticket.cantidadTotal)} · {posCopy.verTicket}
+                        {ticket.ahorro > 0
+                          ? posCopy.ahorro(formatPesos(ticket.ahorro))
+                          : `${posCopy.productosLabel(ticket.cantidadTotal)} · ${posCopy.verTicket}`}
                       </span>
-                      <span className="num block text-2xl font-extrabold leading-tight text-cuadre-900">
-                        {formatPesos(ticket.total)}
+                      <span className="flex items-baseline gap-2 leading-tight">
+                        {ticket.ahorro > 0 && (
+                          <span className="num text-sm font-semibold text-cuadre-900/35 line-through">
+                            {formatPesos(ticket.subtotal)}
+                          </span>
+                        )}
+                        <span className="num text-2xl font-extrabold text-cuadre-900">
+                          {formatPesos(ticket.total)}
+                        </span>
                       </span>
                     </span>
                   </button>
