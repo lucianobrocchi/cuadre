@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { obtenerConfig } from './db/config';
-import { BottomNav, type Tab } from './components/BottomNav';
+import { BottomNav } from './components/BottomNav';
+import { SideNav } from './components/SideNav';
+import type { Tab } from './components/navTabs';
 import { Logo } from './components/Logo';
 import { Onboarding } from './features/onboarding/Onboarding';
 import { PuntoDeVenta } from './features/pos/PuntoDeVenta';
@@ -32,36 +34,45 @@ function AppShell({
   const [tab, setTab] = useState<Tab>('vender');
   const [ajustes, setAjustes] = useState(false);
 
-  if (ajustes) {
-    return (
-      <Ajustes
-        onAtras={() => setAjustes(false)}
-        onEditarProductos={() => {
-          setAjustes(false);
-          setTab('productos');
-        }}
-      />
-    );
+  function irA(t: Tab) {
+    setAjustes(false);
+    setTab(t);
   }
 
   return (
-    <div className="min-h-full">
-      {tab === 'vender' && (
-        <PuntoDeVenta
-          nombreKiosco={nombreKiosco}
-          fondoInicial={fondoInicial}
-          onIrAProductos={() => setTab('productos')}
-          onIrACaja={() => setTab('caja')}
-          onAbrirAjustes={() => setAjustes(true)}
-        />
-      )}
-      {tab === 'negocio' && <Negocio />}
-      {tab === 'caja' && <Caja fondoInicial={fondoInicial} />}
-      {tab === 'productos' && <Productos />}
-      {tab === 'historial' && <Historial />}
+    <>
+      <div className="min-h-full lg:pl-60">
+        {ajustes ? (
+          <Ajustes
+            onAtras={() => setAjustes(false)}
+            onEditarProductos={() => {
+              setAjustes(false);
+              setTab('productos');
+            }}
+          />
+        ) : (
+          <>
+            {tab === 'vender' && (
+              <PuntoDeVenta
+                nombreKiosco={nombreKiosco}
+                fondoInicial={fondoInicial}
+                onIrAProductos={() => setTab('productos')}
+                onIrACaja={() => setTab('caja')}
+                onAbrirAjustes={() => setAjustes(true)}
+              />
+            )}
+            {tab === 'negocio' && <Negocio />}
+            {tab === 'caja' && <Caja fondoInicial={fondoInicial} />}
+            {tab === 'productos' && <Productos />}
+            {tab === 'historial' && <Historial />}
 
-      <BottomNav activa={tab} onCambiar={setTab} />
-    </div>
+            <BottomNav activa={tab} onCambiar={setTab} />
+          </>
+        )}
+      </div>
+
+      <SideNav activa={tab} onCambiar={irA} onAjustes={() => setAjustes(true)} enAjustes={ajustes} />
+    </>
   );
 }
 

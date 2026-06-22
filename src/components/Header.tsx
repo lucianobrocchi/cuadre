@@ -12,7 +12,7 @@ interface Props {
 export function Header({ titulo, subtitulo, onAtras, accion }: Props) {
   return (
     <header className="safe-top sticky top-0 z-20 bg-cuadre text-white">
-      <div className="mx-auto flex min-h-[3.5rem] max-w-md items-center gap-2 px-4 py-3">
+      <div className="mx-auto flex min-h-[3.5rem] max-w-md items-center gap-2 px-4 py-3 lg:max-w-4xl">
         {onAtras && (
           <button
             type="button"

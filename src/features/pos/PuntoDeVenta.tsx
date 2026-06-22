@@ -9,9 +9,8 @@ import { Header } from '../../components/Header';
 import { Pantalla } from '../../components/Pantalla';
 import { Sheet } from '../../components/Sheet';
 import { InputPlata } from '../../components/InputPlata';
-import { IconoAjustes, IconoBuscar, IconoCheck, IconoChevron } from '../../components/Iconos';
-import { formatPesos, normalizar } from '../../lib/format';
-import { medios } from '../../lib/medios';
+import { IconoAjustes, IconoBuscar, IconoCheck } from '../../components/Iconos';
+import { normalizar } from '../../lib/format';
 import { precioSegunLista, type ListaPrecio } from '../../lib/listaPrecio';
 import { AbrirCajaSheet } from '../caja/AbrirCaja';
 import { BarraEstadoCaja } from '../caja/BarraEstadoCaja';
@@ -19,7 +18,7 @@ import { SinCaja } from '../caja/SinCaja';
 import { useCajaActiva } from '../caja/useCajaActiva';
 import { CategoriaChips } from './CategoriaChips';
 import { ProductoGrid } from './ProductoGrid';
-import { TicketLista } from './TicketLista';
+import { PanelCobro } from './PanelCobro';
 import { FiarSheet } from './FiarSheet';
 import { useTicket } from './useTicket';
 import { posCopy } from './pos.copy';
@@ -190,7 +189,8 @@ export function PuntoDeVenta({
     <>
       {header}
 
-      <Pantalla>
+      {/* En escritorio, el panel de cobro vive a la derecha; reservamos su ancho. */}
+      <div className="mx-auto max-w-md px-4 pt-4 pad-nav lg:mx-0 lg:max-w-none lg:px-6 lg:pt-6 lg:pb-10 lg:pr-[404px]">
         <BarraEstadoCaja caja={caja} onClick={onIrACaja} />
 
         {productos.length === 0 ? (
@@ -198,9 +198,7 @@ export function PuntoDeVenta({
             <span className="text-5xl" aria-hidden>
               🛒
             </span>
-            <h2 className="mt-4 text-xl font-bold text-cuadre-900">
-              {posCopy.sinProductosTitulo}
-            </h2>
+            <h2 className="mt-4 text-xl font-bold text-cuadre-900">{posCopy.sinProductosTitulo}</h2>
             <p className="mt-1 text-cuadre-900/60">{posCopy.sinProductosSub}</p>
             <button type="button" onClick={onIrAProductos} className="btn-primario mt-6 w-auto px-8">
               Cargar productos
@@ -210,7 +208,7 @@ export function PuntoDeVenta({
           <>
             {/* Lista de precios (aparece cuando hay precios mayoristas cargados) */}
             {productos.some((p) => p.precioMayor != null) && (
-              <div className="mb-3 flex rounded-2xl bg-cuadre-50 p-1">
+              <div className="mb-3 flex rounded-2xl bg-cuadre-50 p-1 lg:max-w-sm">
                 {(['minorista', 'mayorista'] as const).map((l) => (
                   <button
                     key={l}
@@ -257,7 +255,7 @@ export function PuntoDeVenta({
             {!buscando && (
               <CategoriaChips categorias={categorias} activa={catActiva} onCambiar={setCatActiva} />
             )}
-            <div className={hayItems ? 'pb-44' : ''}>
+            <div className={hayItems ? 'pb-44 lg:pb-0' : ''}>
               {productosFiltrados.length === 0 ? (
                 <p className="mt-10 text-center text-cuadre-900/45">
                   {buscando ? posCopy.sinResultados : posCopy.sinProductosCategoria}
@@ -274,151 +272,37 @@ export function PuntoDeVenta({
             </div>
           </>
         )}
-      </Pantalla>
+      </div>
 
-      {/* Panel del ticket, fijo por encima de la barra inferior. */}
+      {/* Panel de cobro — escritorio: fijo a la derecha. */}
+      <aside className="fixed bottom-0 right-0 top-14 z-20 hidden w-[380px] flex-col border-l border-cuadre/10 bg-white lg:flex">
+        <PanelCobro
+          ticket={ticket}
+          medio={medio}
+          onMedio={setMedio}
+          onCobrar={cobrar}
+          onFiar={() => setFiarAbierto(true)}
+          variante="desktop"
+        />
+      </aside>
+
+      {/* Panel de cobro — mobile: flotante sobre la barra inferior. */}
       {hayItems && (
         <div
-          className="fixed inset-x-0 z-30"
+          className="fixed inset-x-0 z-30 lg:hidden"
           style={{ bottom: 'calc(var(--nav-h) + env(safe-area-inset-bottom))' }}
         >
           <div className="mx-auto max-w-md px-3">
-            <div className="overflow-hidden rounded-3xl bg-white shadow-sheet ring-1 ring-cuadre/10">
-              {expandido && (
-                <div className="px-4 pt-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-cuadre-900/55">Ticket</span>
-                    <button
-                      type="button"
-                      onClick={ticket.limpiar}
-                      className="text-sm font-semibold text-falta"
-                    >
-                      {posCopy.vaciar}
-                    </button>
-                  </div>
-                  <div className="max-h-[32vh] overflow-y-auto">
-                    <TicketLista items={ticket.items} onCambiarCantidad={ticket.cambiarCantidad} />
-                  </div>
-
-                  {/* Descuento y redondeo */}
-                  <div className="mt-1 flex flex-col gap-2 border-t border-cuadre/10 py-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-cuadre-900/55">
-                        {posCopy.descuento}
-                      </span>
-                      <div className="flex gap-1">
-                        {[0, 5, 10, 15].map((d) => (
-                          <button
-                            key={d}
-                            type="button"
-                            onClick={() => ticket.setDescuentoPct(d)}
-                            className={`num min-w-9 rounded-lg px-2 py-1 text-sm font-bold transition ${
-                              ticket.descuentoPct === d
-                                ? 'bg-cuadre text-white'
-                                : 'bg-cuadre-50 text-cuadre-900/65'
-                            }`}
-                          >
-                            {d === 0 ? posCopy.sinDescuento : `${d}%`}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => ticket.setRedondear(!ticket.redondear)}
-                      className="flex items-center justify-between"
-                    >
-                      <span className="text-sm font-semibold text-cuadre-900/55">
-                        {posCopy.redondear}
-                      </span>
-                      <span
-                        className={`flex h-6 w-11 items-center rounded-full p-0.5 transition ${
-                          ticket.redondear ? 'bg-cuadre' : 'bg-cuadre-900/15'
-                        }`}
-                      >
-                        <span
-                          className={`h-5 w-5 rounded-full bg-white shadow transition ${
-                            ticket.redondear ? 'translate-x-5' : ''
-                          }`}
-                        />
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex flex-col gap-2.5 border-t border-cuadre/10 p-3">
-                {/* Medio de pago */}
-                <div className="grid grid-cols-2 gap-2">
-                  {medios.map((m) => {
-                    const activo = medio === m.id;
-                    return (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => setMedio(m.id)}
-                        className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-semibold transition ${
-                          activo
-                            ? 'bg-cuadre text-white'
-                            : 'bg-cuadre-50 text-cuadre-900/70 active:bg-cuadre-100'
-                        }`}
-                      >
-                        <span aria-hidden>{m.emoji}</span>
-                        {m.label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="flex items-stretch gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setExpandido((v) => !v)}
-                    className="flex flex-1 items-center gap-2 rounded-2xl px-3 py-1 text-left transition active:bg-cuadre-50"
-                  >
-                    <IconoChevron
-                      width={18}
-                      height={18}
-                      className={`shrink-0 text-cuadre-900/40 transition-transform ${
-                        expandido ? 'rotate-90' : '-rotate-90'
-                      }`}
-                    />
-                    <span>
-                      <span className="block text-xs font-medium text-cuadre-900/55">
-                        {ticket.ahorro > 0
-                          ? posCopy.ahorro(formatPesos(ticket.ahorro))
-                          : `${posCopy.productosLabel(ticket.cantidadTotal)} · ${posCopy.verTicket}`}
-                      </span>
-                      <span className="flex items-baseline gap-2 leading-tight">
-                        {ticket.ahorro > 0 && (
-                          <span className="num text-sm font-semibold text-cuadre-900/35 line-through">
-                            {formatPesos(ticket.subtotal)}
-                          </span>
-                        )}
-                        <span className="num text-2xl font-extrabold text-cuadre-900">
-                          {formatPesos(ticket.total)}
-                        </span>
-                      </span>
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={cobrar}
-                    className="btn-primario w-auto px-7 text-xl"
-                  >
-                    {posCopy.cobrar}
-                  </button>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setFiarAbierto(true)}
-                  className="flex items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-semibold text-cuadre-900/60 transition active:bg-cuadre-50"
-                >
-                  <span aria-hidden>📓</span> {posCopy.fiar}
-                </button>
-              </div>
-            </div>
+            <PanelCobro
+              ticket={ticket}
+              medio={medio}
+              onMedio={setMedio}
+              onCobrar={cobrar}
+              onFiar={() => setFiarAbierto(true)}
+              variante="mobile"
+              expandido={expandido}
+              onToggleExpandir={() => setExpandido((v) => !v)}
+            />
           </div>
         </div>
       )}

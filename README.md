@@ -3,7 +3,8 @@
 **POS y cierre de caja para kioscos y almacenes argentinos.** Local-first, offline, PWA instalable.
 El kiosquero abre caja, vende con un toque, anota la plata que entra y sale, y al cerrar cuenta el
 efectivo: la app le dice si la caja **cuadra, le falta o le sobra**. Mobile-first, pensada para un
-Android de gama baja y para usar con el dedo en el mostrador.
+Android de gama baja y para usar con el dedo en el mostrador — y con **layout de escritorio** para
+la compu del mostrador (navegación lateral + POS a dos paneles).
 
 Marca: **Verde Cuadre `#0F3D2E`**, tipografías **Cabinet Grotesk** (títulos, Fontshare) + **Inter** (cuerpo, Google Fonts).
 
@@ -36,6 +37,7 @@ npm run preview  # previsualizar el build
 
 - **Vite 5 + React 18 + TypeScript** · **Tailwind CSS v3** · **Dexie.js** (IndexedDB) · **vite-plugin-pwa**.
 - **Tailwind se queda en v3** por ahora (no se migró a v4 — decisión consciente para no romper estilos).
+- **Responsive con un solo árbol**: mobile-first y, en `lg+` (escritorio), navegación lateral (`SideNav`) en vez de la inferior y el **POS a dos paneles** (grilla + panel de cobro fijo a la derecha vía `PanelCobro`, que se reusa flotante en mobile). Mismos componentes, solo cambia el acomodo con clases `lg:`.
 - **Sin backend todavía.** Todo es local-first con Dexie. Supabase + MercadoPago + IA son de la **Fase D**.
 - **El agente que lee fotos de cuaderno está MOCKEADO** (`src/features/productos/importar/parseFoto.ts`): hoy devuelve datos de ejemplo. La interfaz (`File → Promise<FilaImportada[]>`) ya está fija; enchufar la **Claude API (visión)** vía una **Supabase Edge Function** es cambiar solo el cuerpo de esa función. La API key vive en el backend, nunca en la PWA. Por eso importar por foto necesitará internet; **vender sigue 100% offline**.
 - **Planes (a futuro):** **Pro** = dashboard básico, lindo y simple. **Full** = dashboard ejecutivo avanzado + AFIP + permisos.
