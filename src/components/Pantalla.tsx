@@ -10,7 +10,7 @@ interface Props {
 /** Contenedor scrollable de contenido, centrado y con ancho máximo mobile. */
 export function Pantalla({ children, conNav = true, className = '' }: Props) {
   return (
-    <main className={`mx-auto max-w-md px-4 pt-4 ${conNav ? 'pad-nav' : ''} ${className}`}>
+    <main className={`mx-auto max-w-md px-4 pt-4 lg:max-w-4xl lg:pt-6 ${conNav ? 'pad-nav lg:pb-10' : ''} ${className}`}>
       {children}
     </main>
   );

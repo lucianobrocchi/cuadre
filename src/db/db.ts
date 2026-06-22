@@ -3,9 +3,11 @@ import type {
   CajaSesion,
   Categoria,
   Cierre,
+  Cliente,
   Config,
   Egreso,
   Movimiento,
+  MovimientoCuenta,
   Producto,
   Venta,
 } from './types';
@@ -20,6 +22,8 @@ export class CuadreDB extends Dexie {
   cajas!: Table<CajaSesion, number>;
   movimientos!: Table<Movimiento, number>;
   categorias!: Table<Categoria, number>;
+  clientes!: Table<Cliente, number>;
+  cuentas!: Table<MovimientoCuenta, number>;
   config!: Table<Config, number>;
   // Legacy (v1): se mantienen declaradas para no perder datos viejos.
   egresos!: Table<Egreso, number>;
@@ -56,6 +60,20 @@ export class CuadreDB extends Dexie {
       cajas: '++id, &uuid, estado, abiertaEn',
       movimientos: '++id, &uuid, cajaUuid, fecha, tipo',
       categorias: '++id, &uuid, orden',
+      config: '++id',
+      egresos: '++id, fecha',
+      cierres: '++id, fecha',
+    });
+
+    // v4: fiados / cuenta corriente (clientes + movimientos de cuenta).
+    this.version(4).stores({
+      productos: '++id, nombre, categoriaUuid, codigoBarras',
+      ventas: '++id, fecha, cajaUuid',
+      cajas: '++id, &uuid, estado, abiertaEn',
+      movimientos: '++id, &uuid, cajaUuid, fecha, tipo',
+      categorias: '++id, &uuid, orden',
+      clientes: '++id, &uuid, nombre',
+      cuentas: '++id, &uuid, clienteUuid, fecha, tipo',
       config: '++id',
       egresos: '++id, fecha',
       cierres: '++id, fecha',

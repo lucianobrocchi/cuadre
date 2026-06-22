@@ -31,3 +31,11 @@ export function parsePesos(texto: string): number {
   if (!soloDigitos) return 0;
   return parseInt(soloDigitos, 10);
 }
+
+/** Normaliza para buscar: minúsculas y sin acentos. "Café" -> "cafe". */
+export function normalizar(texto: string): string {
+  return texto
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
+}

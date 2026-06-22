@@ -1,30 +1,17 @@
-import {
-  IconoCaja,
-  IconoGanancia,
-  IconoHistorial,
-  IconoProductos,
-  IconoVender,
-} from './Iconos';
+import { TABS, type Tab } from './navTabs';
 
-export type Tab = 'vender' | 'caja' | 'productos' | 'ganancia' | 'historial';
-
-const TABS: { id: Tab; label: string; Icono: typeof IconoVender }[] = [
-  { id: 'vender', label: 'Vender', Icono: IconoVender },
-  { id: 'caja', label: 'Caja', Icono: IconoCaja },
-  { id: 'productos', label: 'Productos', Icono: IconoProductos },
-  { id: 'ganancia', label: 'Ganancia', Icono: IconoGanancia },
-  { id: 'historial', label: 'Historial', Icono: IconoHistorial },
-];
+export type { Tab };
 
 interface Props {
   activa: Tab;
   onCambiar: (tab: Tab) => void;
 }
 
+/** Barra de navegación inferior (solo en mobile; en escritorio va la lateral). */
 export function BottomNav({ activa, onCambiar }: Props) {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-cuadre/10 bg-white/95 backdrop-blur"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-cuadre/10 bg-white/95 backdrop-blur lg:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="mx-auto flex max-w-md">

@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import type { Producto } from '../../db/types';
 import { formatPesos } from '../../lib/format';
+import { estadoStock } from '../../lib/stock';
 
 interface Props {
   productos: Producto[];
@@ -9,10 +10,12 @@ interface Props {
   enTicket?: Map<number, number>;
   /** Si se pasa, mantener presionada la card abre la edición de precio. */
   onEditarPrecio?: (p: Producto) => void;
+  /** Precio a mostrar según la lista activa (default: el precio base). */
+  precioDe?: (p: Producto) => number;
 }
 
 /** Grilla de productos: un toque agrega al ticket; mantener presionado edita el precio. */
-export function ProductoGrid({ productos, onAgregar, enTicket, onEditarPrecio }: Props) {
+export function ProductoGrid({ productos, onAgregar, enTicket, onEditarPrecio, precioDe }: Props) {
   const timer = useRef<number | null>(null);
   const fueLargo = useRef(false);
 
@@ -41,7 +44,7 @@ export function ProductoGrid({ productos, onAgregar, enTicket, onEditarPrecio }:
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
       {productos.map((p) => {
         const cantidad = p.id != null ? enTicket?.get(p.id) ?? 0 : 0;
         return (
@@ -68,11 +71,29 @@ export function ProductoGrid({ productos, onAgregar, enTicket, onEditarPrecio }:
               {p.nombre}
             </span>
             <span className="num text-sm font-medium text-cuadre-900/60">
-              {formatPesos(p.precio)}
+              {formatPesos(precioDe ? precioDe(p) : p.precio)}
             </span>
+            <StockChip p={p} />
           </button>
         );
       })}
     </div>
+  );
+}
+
+/** Aviso de stock en la card del POS: solo si lleva stock y está bajo o agotado. */
+function StockChip({ p }: { p: Producto }) {
+  if (p.stock == null) return null;
+  const estado = estadoStock(p);
+  if (estado === 'ok') return null;
+  const sin = estado === 'sin';
+  return (
+    <span
+      className={`num absolute bottom-1.5 left-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+        sin ? 'bg-falta/15 text-falta' : 'bg-sobra/20 text-sobra'
+      }`}
+    >
+      {sin ? 'sin stock' : `quedan ${p.stock}`}
+    </span>
   );
 }

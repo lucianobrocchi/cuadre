@@ -2,7 +2,7 @@ import { finDelDia, inicioDelDia } from '../lib/fecha';
 import { db } from './db';
 import type { MedioPago, Venta, VentaItem } from './types';
 
-/** Registra una venta dentro de una caja y devuelve su id. */
+/** Registra una venta dentro de una caja y devuelve su id. Descuenta stock. */
 export async function registrarVenta(
   items: VentaItem[],
   medioPago: MedioPago = 'efectivo',
@@ -16,12 +16,35 @@ export async function registrarVenta(
     medioPago,
     cajaUuid,
   };
-  return db.ventas.add(venta);
+  return db.transaction('rw', db.ventas, db.productos, async () => {
+    const id = await db.ventas.add(venta);
+    await aplicarStock(items, -1);
+    return id;
+  });
 }
 
-/** Anula (borra) una venta. */
+/** Anula (borra) una venta y le devuelve el stock descontado. */
 export async function borrarVenta(id: number): Promise<void> {
-  await db.ventas.delete(id);
+  await db.transaction('rw', db.ventas, db.productos, async () => {
+    const venta = await db.ventas.get(id);
+    await db.ventas.delete(id);
+    if (venta) await aplicarStock(venta.items, +1);
+  });
+}
+
+/**
+ * Aplica el efecto de los items sobre el stock (`signo` = -1 al vender, +1 al
+ * anular). Solo toca productos que llevan stock; nunca baja de 0. Corre dentro
+ * de una transacción rw sobre `productos`.
+ */
+async function aplicarStock(items: VentaItem[], signo: 1 | -1): Promise<void> {
+  for (const it of items) {
+    const p = await db.productos.get(it.productoId);
+    if (!p || p.stock == null) continue;
+    await db.productos.update(it.productoId, {
+      stock: Math.max(0, p.stock + signo * it.cantidad),
+    });
+  }
 }
 
 /** Ventas dentro de un rango [desde, hasta] (timestamps). */

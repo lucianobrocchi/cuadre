@@ -61,6 +61,81 @@ async function asegurarCostos(productos: Producto[], r: () => number): Promise<v
   });
 }
 
+/**
+ * Le pone stock de ejemplo a los productos que no lleven, para mostrar el
+ * inventario lleno: la mayoría con stock holgado y algunos bajos/agotados
+ * para que se vean las alertas. No toca los que ya llevan stock.
+ */
+async function asegurarStock(productos: Producto[], r: () => number): Promise<void> {
+  const sinStock = productos.filter((p) => p.stock == null && p.id != null);
+  await db.transaction('rw', db.productos, async () => {
+    for (const p of sinStock) {
+      const sorteo = r();
+      // 10% agotado, 18% bajo, el resto con stock sano.
+      const stock = sorteo < 0.1 ? 0 : sorteo < 0.28 ? rint(r, 1, 3) : rint(r, 8, 60);
+      await db.productos.update(p.id!, { stock });
+      p.stock = stock;
+    }
+  });
+}
+
+/**
+ * Crea clientes de ejemplo con fiados, solo si todavía no hay ninguno (para no
+ * pisar clientes reales). Muestra la pestaña de fiados con saldos variados.
+ */
+async function asegurarFiadosDemo(r: () => number): Promise<void> {
+  if ((await db.clientes.count()) > 0) return;
+  const nombres = ['Doña Rosa', 'Juan del 3', 'Sra. Marta', 'El Flaco', 'Vecina Pao'];
+  const ahora = Date.now();
+
+  await db.transaction('rw', db.clientes, db.cuentas, async () => {
+    for (const nombre of nombres) {
+      const clienteUuid = nuevoUuid();
+      await db.clientes.add({ uuid: clienteUuid, nombre, updatedAt: ahora, dirty: true });
+
+      // 1–3 fiados recientes y, a veces, un pago parcial.
+      const nCargos = rint(r, 1, 3);
+      for (let i = 0; i < nCargos; i++) {
+        const fecha = ahora - rint(r, 0, 12) * MS_DIA - rint(r, 0, 10) * MS_HORA;
+        await db.cuentas.add({
+          uuid: nuevoUuid(),
+          clienteUuid,
+          tipo: 'cargo',
+          monto: redondear(rint(r, 1500, 9000)),
+          fecha,
+          updatedAt: fecha,
+          dirty: true,
+        });
+      }
+      if (r() < 0.5) {
+        const fecha = ahora - rint(r, 0, 5) * MS_DIA;
+        await db.cuentas.add({
+          uuid: nuevoUuid(),
+          clienteUuid,
+          tipo: 'pago',
+          monto: redondear(rint(r, 1000, 5000)),
+          fecha,
+          medioPago: 'efectivo',
+          updatedAt: fecha,
+          dirty: true,
+        });
+      }
+    }
+  });
+}
+
+/** Le pone un precio mayorista (~85% del minorista) a los que no tengan. */
+async function asegurarMayorista(productos: Producto[], r: () => number): Promise<void> {
+  const sinMayor = productos.filter((p) => p.precioMayor == null && p.precio > 0 && p.id != null);
+  await db.transaction('rw', db.productos, async () => {
+    for (const p of sinMayor) {
+      const precioMayor = Math.max(p.precio - 50, redondear(p.precio * (0.82 + r() * 0.06)));
+      await db.productos.update(p.id!, { precioMayor });
+      p.precioMayor = precioMayor;
+    }
+  });
+}
+
 export interface ResultadoDemo {
   dias: number;
   cajas: number;
@@ -75,6 +150,9 @@ export async function cargarDatosDemo(dias = 14): Promise<ResultadoDemo> {
   const productos = await db.productos.toArray();
   if (productos.length === 0) return { dias: 0, cajas: 0, ventas: 0 };
   await asegurarCostos(productos, r);
+  await asegurarStock(productos, r);
+  await asegurarMayorista(productos, r);
+  await asegurarFiadosDemo(r);
 
   const egresoCats: CategoriaMovimiento[] = ['proveedor', 'gasto', 'retiro'];
   const cajasNuevas: CajaSesion[] = [];

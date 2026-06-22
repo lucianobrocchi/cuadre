@@ -53,3 +53,12 @@ export function formatFechaLarga(ts: number = Date.now()): string {
   const txt = FMT_FECHA_LARGA.format(ts);
   return txt.charAt(0).toUpperCase() + txt.slice(1);
 }
+
+/** "Hoy", "Ayer" o, si es más viejo, "Martes 2 de junio". */
+export function formatDiaRelativo(ts: number): string {
+  const hoy = inicioDelDia();
+  const dia = inicioDelDia(ts);
+  if (dia === hoy) return 'Hoy';
+  if (dia === hoy - MS_DIA) return 'Ayer';
+  return formatFechaLarga(ts);
+}
