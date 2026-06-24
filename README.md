@@ -16,6 +16,7 @@ Marca: **Verde Cuadre `#0F3D2E`**, tipografías **Cabinet Grotesk** (títulos, F
 | **A — Núcleo de caja** | Sesión abrir/cerrar obligatoria, bloqueo de venta sin caja, estado siempre visible, movimientos (ingresos/egresos), cierre con descuadre, historial de cajas | ✅ Hecho y verificado |
 | **B — Productos** | Categorías + filtro en POS, editar precio al toque (long-press), importar Excel/CSV, lector de fotos con IA (mock), carga rápida desde catálogo precargado | ✅ Hecho y verificado |
 | **★ Rentabilidad** | Pestaña **Ganancia**: margen del catálogo (categoría→producto) + **ganancia real** por período (hoy / 7 días). Campo `costo` + snapshot del costo al vender. Editar costo al toque | ✅ Hecho y verificado |
+| **★ Historial de ventas** | Pestaña **Historial** con toggle **Cajas / Ventas**: las ventas de los **últimos 7 días** agrupadas día por día (total + tickets + efectivo/transferencia), y el detalle de cada venta con sus ítems | ✅ Hecho |
 | **C — Panel de venta ágil** | Descuento %, redondeo, atajo F8, búsqueda + lector de barras, múltiples listas de precio | ⏳ Pendiente |
 | **D — Backend** | Supabase (auth + sync), permisos, **agente IA real** (fotos + facturas) | ⏳ Pendiente |
 
@@ -57,7 +58,7 @@ versión simplificada (solo vendido vs. contado) para el "ajá" inicial.
 - **Caja**: abrir/cerrar sesión, estado (fondo / en caja), movimientos de efectivo, resumen del día.
 - **Productos**: lista **agrupada por categoría** (con el costo de cada uno). Un solo botón **Agregar productos** abre un hub con las 3 vías → **⚡ del catálogo** (con buscador y "agregar toda la categoría"), **📥 Excel o foto**, **✏️ uno a mano**. Editar/borrar; categorías que se crean al vuelo. El alta manual guarda **costo** y **categoría**.
 - **Ganancia** (dashboard): selector de período (hoy / últimos 7 días). Arriba, **ganancia real** del período (vendido, costo, ganancia, margen %); abajo, **margen del catálogo** por categoría → producto. Tocás un producto y le ponés el costo ahí mismo. Necesita que los productos tengan `costo` cargado.
-- **Historial**: cajas cerradas con su descuadre y detalle (apertura/cierre, fondo, ventas, ingresos, salidas, esperado, contado).
+- **Historial**: toggle **Cajas / Ventas**. *Cajas*: cajas cerradas con su descuadre y detalle (apertura/cierre, fondo, ventas, ingresos, salidas, esperado, contado). *Ventas*: las ventas de los **últimos 7 días** agrupadas por día (con total, cantidad de tickets y reparto efectivo/transferencia); tocás un día y ves cada venta con su hora, medio de pago e ítems.
 - **Ajustes**: nombre del kiosco, fondo inicial por defecto, ir a productos, **cargar datos de demo** (~14 días de ventas/cierres para ver la app llena), y empezar de cero (borra todo: productos, categorías, ventas, cajas y movimientos).
 
 ## Modelo de datos (Dexie v3)
@@ -106,7 +107,7 @@ src/
 1. ✅ **Dashboard de rentabilidad** *(hecho y verificado)* — pestaña **Ganancia**: margen del catálogo (por categoría y por producto) + **ganancia real** del período (hoy / 7 días). Se agregó `costo` a `Producto` y un **snapshot del costo** en cada venta (la ganancia histórica no cambia si después tocás el costo; las ventas viejas usan el costo actual como respaldo). El costo se carga/edita desde el form de producto y desde el propio dashboard.
    - El `costo` se carga **producto por producto** (form / dashboard), en la **carga rápida del catálogo** (campo opcional al seleccionar) y en la **importación Excel/foto** (autodetecta la columna *costo* y se edita en el preview).
    - **Pro**: este dashboard, lindo y simple. **Full**: ejecutivo avanzado (tendencias, comparativas por semana/mes).
-2. **Historial de ventas de la semana** — vista de los últimos 7 días.
+2. ✅ **Historial de ventas de la semana** *(hecho)* — en la pestaña **Historial**, toggle **Cajas / Ventas**: las ventas de los últimos 7 días agrupadas día por día, con el detalle de cada venta y sus ítems (`src/lib/ventasHistorial.ts` + `src/features/historial/`).
 3. ✅ **Onboarding rework** *(hecho)* — flujo: nombre → elegir del catálogo **por categorías** con **costo opcional** → venta de práctica → primer cierre → cierra invitando a la pestaña **Ganancia**. Persiste categoría + costo al terminar (`src/features/onboarding/`, catálogo curado en `catalogoInicial.ts`).
 4. **Fase C — panel de venta ágil**: descuento %, redondeo auto/manual, atajo **F8** para cobrar, búsqueda + **lector de barras** (el campo `codigoBarras` ya existe), **múltiples listas de precio** (Minorista/Mayorista).
 5. **Fase D — backend**: Supabase (auth + sync last-write-wins), **permisos granulares**, y el **agente IA real** (fotos de cuaderno + lectura de facturas con la Claude API).
@@ -115,8 +116,9 @@ src/
 ## Para retomar en otra conversación
 
 - Todo el código está en el repo (`main`). Build verificado.
-- **Hecho en esta tanda:** dashboard de rentabilidad (`src/lib/rentabilidad.ts` + `src/features/dashboard/`), costo en toda la carga, **datos de demo** (`src/db/demo.ts`, botón en Ajustes), **productos agrupados por categoría**, **carga 2.0** (hub + buscador + "agregar toda la categoría") y **onboarding 2.0** (con categorías y costos).
+- **Hecho en esta tanda:** **historial de ventas de la semana** (`src/lib/ventasHistorial.ts` + `src/features/historial/`): la pestaña Historial ahora tiene un toggle **Cajas / Ventas** y la vista de ventas muestra los últimos 7 días agrupados por día, con el detalle de cada venta y sus ítems. Helper nuevo `formatDiaRelativo` en `src/lib/fecha.ts` ("Hoy" / "Ayer" / "Martes 23").
+- **De tandas anteriores:** dashboard de rentabilidad (`src/lib/rentabilidad.ts` + `src/features/dashboard/`), costo en toda la carga, **datos de demo** (`src/db/demo.ts`, botón en Ajustes), **productos agrupados por categoría**, **carga 2.0** (hub + buscador + "agregar toda la categoría") y **onboarding 2.0** (con categorías y costos).
 - **Para ver la app llena:** Ajustes → "Cargar datos de demo" (~14 días de cajas/ventas/movimientos). No es destructivo; se saca con "empezar de cero".
-- Próximo paso natural: **historial de ventas de la semana** (roadmap #2).
+- Próximo paso natural: **Fase C — panel de venta ágil** (roadmap #4): descuento %, redondeo, atajo F8, búsqueda + lector de barras, listas de precio.
 - El catálogo precargado se edita en `src/data/catalogoPrecargado.ts`; el del onboarding en `src/data/catalogoInicial.ts` (`catalogoOnboarding`).
 - Convención: textos de UI siempre en archivos `*.copy.ts` por feature; español rioplatense informal (vos, tocá, cargá, la plata).
