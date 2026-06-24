@@ -38,6 +38,11 @@ const FMT_FECHA_LARGA = new Intl.DateTimeFormat('es-AR', {
   month: 'long',
 });
 
+const FMT_DIA_SEMANA = new Intl.DateTimeFormat('es-AR', {
+  weekday: 'long',
+  day: 'numeric',
+});
+
 /** "02/06/2026" */
 export function formatFecha(ts: number): string {
   return FMT_FECHA.format(ts);
@@ -51,5 +56,19 @@ export function formatHora(ts: number): string {
 /** "martes 2 de junio" (con mayúscula inicial) */
 export function formatFechaLarga(ts: number = Date.now()): string {
   const txt = FMT_FECHA_LARGA.format(ts);
+  return txt.charAt(0).toUpperCase() + txt.slice(1);
+}
+
+/**
+ * Etiqueta relativa de un día: "Hoy", "Ayer" o "Martes 23" según cuán
+ * reciente sea respecto de hoy. Se compara por día calendario, no por horas.
+ */
+export function formatDiaRelativo(ts: number = Date.now()): string {
+  const hoy = inicioDelDia();
+  const dia = inicioDelDia(ts);
+  const difDias = Math.round((hoy - dia) / MS_DIA);
+  if (difDias === 0) return 'Hoy';
+  if (difDias === 1) return 'Ayer';
+  const txt = FMT_DIA_SEMANA.format(ts);
   return txt.charAt(0).toUpperCase() + txt.slice(1);
 }

@@ -2,7 +2,12 @@ import type { EstadoCierre } from '../../db/types';
 
 export const historialCopy = {
   headerTitulo: 'Historial',
-  headerSubtitulo: 'Tus cajas cerradas',
+  headerSubtituloCajas: 'Tus cajas cerradas',
+  headerSubtituloVentas: 'Tus ventas de la semana',
+  // Toggle de vista
+  vistaCajas: 'Cajas',
+  vistaVentas: 'Ventas',
+  // Vacío — cajas
   vacioTitulo: 'Todavía no cerraste ninguna caja',
   vacioSub: 'Cuando cierres tu primera caja, va a aparecer acá.',
   detalleTitulo: 'Detalle de la caja',
@@ -16,6 +21,18 @@ export const historialCopy = {
   esperadoLabel: 'Tendría que haber',
   contadoLabel: 'Contado',
   diferenciaLabel: 'Diferencia',
+  // Vista — ventas de la semana
+  ventasVacioTitulo: 'Todavía no registraste ventas',
+  ventasVacioSub: 'Cuando vendas algo, lo vas a ver acá día por día.',
+  semanaTitulo: 'Últimos 7 días',
+  semanaVendido: 'Vendido',
+  semanaTickets: (n: number) => `${n} ${n === 1 ? 'venta' : 'ventas'}`,
+  efectivoLabel: 'Efectivo',
+  transferenciaLabel: 'Transferencia',
+  diaDetalleTitulo: 'Ventas del día',
+  ventaHora: (hora: string) => `${hora} hs`,
+  ventaItems: (n: number) => `${n} ${n === 1 ? 'ítem' : 'ítems'}`,
+  unidades: (n: number) => `×${n}`,
 };
 
 export const estadoCierreLabel: Record<EstadoCierre, string> = {
